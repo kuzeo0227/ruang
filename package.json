@@ -1,0 +1,18 @@
+{
+  "name": "ruang",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Ruang: first-person interior design walkthrough of condo floor plans",
+  "type": "module",
+  "scripts": {
+    "check:plans": "tsx scripts/check-plans.ts",
+    "render:plans": "tsx scripts/render-plans.ts",
+    "export:catalogue": "tsx scripts/export-catalogue.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
