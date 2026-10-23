@@ -9,10 +9,12 @@
     "render:plans": "tsx scripts/render-plans.ts",
     "export:catalogue": "tsx scripts/export-catalogue.ts",
     "build:moodboards": "tsx scripts/build-moodboards.ts",
+    "build:mockup": "tsx scripts/build-ui-mockup.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "lucide-static": "^1.61.0",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }

@@ -1,0 +1,1991 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ruang · Interface mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../src/ui/tokens.css">
+<style>
+/* Mockup page styles. Component rules here are the reference for the app's UI. */
+
+* { box-sizing: border-box; }
+body { margin: 0; background: #0f0e16; color: var(--text); font-family: var(--font); }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+.ic { flex: none; display: block; }
+
+/* ---------- Review page chrome ---------- */
+.review-head { padding: 44px 48px 8px; max-width: 1100px; }
+.review-head h1 { margin: 0; font-size: 40px; font-weight: 800; letter-spacing: -0.03em; }
+.review-head h1 em { font-style: normal; background: var(--grad-cta); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.review-head p { color: var(--text-2); line-height: 1.55; }
+section { padding: 24px 48px 40px; }
+section h2 { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; color: var(--text-2); margin: 0 0 16px; }
+.num { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--grad-cta); color: #fff; font-size: 14px; }
+
+/* ---------- Glass ---------- */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow), inset 0 1px 0 var(--glass-hi);
+}
+
+/* ---------- Frames ---------- */
+.frame.desktop { position: relative; width: 1440px; height: 900px; border-radius: 18px; overflow: hidden; background-size: cover; background-position: center; box-shadow: 0 30px 80px #000a; }
+
+/* ---------- Top bar ---------- */
+.topbar { position: absolute; top: 18px; left: 18px; right: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 3; }
+.group { display: flex; gap: 10px; align-items: center; }
+.logo { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px 0 6px; border-radius: var(--r-pill); }
+.logo .mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--grad-cta); font-weight: 800; font-size: 15px; }
+.logo .word { font-weight: 800; letter-spacing: -0.02em; font-size: 17px; }
+.logo.small { height: 36px; padding-right: 12px; } .logo.small .mark { width: 26px; height: 26px; font-size: 13px; } .logo.small .word { font-size: 15px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-radius: var(--r-pill); font-weight: 600; font-size: 14px; }
+.chip .dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+.chip.c-style { border-color: color-mix(in srgb, var(--c-style) 60%, transparent); background: color-mix(in srgb, var(--c-style) 24%, var(--glass)); }
+.chip.c-views { border-color: color-mix(in srgb, var(--c-views) 60%, transparent); background: color-mix(in srgb, var(--c-views) 20%, var(--glass)); }
+.budget { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 16px; border-radius: var(--r-pill); font-size: 13px; color: var(--text-2); border-color: color-mix(in srgb, var(--c-price) 55%, transparent); }
+.budget .ic { color: var(--c-price); }
+.budget b { color: #fff; font-size: 16px; font-variant-numeric: tabular-nums; }
+.budget.small { height: 36px; padding: 0 12px; } .budget.small b { font-size: 14px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: var(--r-pill); font-weight: 700; font-size: 14px; }
+.btn.c-share { border-color: color-mix(in srgb, var(--c-share) 70%, transparent); background: color-mix(in srgb, var(--c-share) 28%, var(--glass)); }
+.cta { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: var(--r-pill); font-weight: 800; font-size: 14px; background: var(--grad-cta); box-shadow: 0 8px 24px rgba(236, 72, 153, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+
+/* ---------- Crosshair and hover ---------- */
+.crosshair { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px #0005, 0 0 12px #0006; z-index: 2; }
+.crosshair i { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: var(--c-furniture); box-shadow: 0 0 8px var(--c-furniture); }
+.crosshair.small { width: 22px; height: 22px; margin: -11px; }
+.hover-outline { position: absolute; border-radius: 14px; border: 2px solid var(--c-furniture); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-furniture) 30%, transparent), 0 0 40px color-mix(in srgb, var(--c-furniture) 55%, transparent), inset 0 0 30px color-mix(in srgb, var(--c-furniture) 25%, transparent); z-index: 1; }
+
+/* ---------- Price card ---------- */
+.pricecard { position: absolute; width: 300px; padding: 16px; border-radius: var(--r-lg); z-index: 3; border-top: 3px solid var(--c-furniture); }
+.pc-top { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-3); }
+.tag { display: inline-block; padding: 3px 10px; border-radius: var(--r-pill); font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.tag.c-furniture { background: color-mix(in srgb, var(--c-furniture) 30%, transparent); color: #ffd3cd; }
+.pricecard h3 { margin: 10px 0 6px; font-size: 18px; letter-spacing: -0.01em; }
+.pc-price { display: flex; align-items: baseline; gap: 10px; }
+.pc-price b { font-size: 30px; font-weight: 800; color: var(--c-price); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.pc-price span { font-size: 12px; color: var(--text-3); }
+.pc-fin { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 12px; }
+.label { font-size: 12px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.fdots { display: flex; gap: 6px; }
+.fdot { width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1px #0003; }
+.fdot.on { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c-furniture); }
+.fname { color: var(--text-2); }
+.pc-keys { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid var(--glass-line); }
+.key { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); }
+kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 7px; font: 700 11px var(--font); color: #fff; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); border-bottom-width: 2px; }
+
+/* ---------- Side panel (lighting) ---------- */
+.panel { position: absolute; top: 76px; right: 18px; width: 340px; bottom: 112px; border-radius: var(--r-lg); padding: 16px; z-index: 3; overflow: hidden; display: flex; flex-direction: column; gap: 14px; }
+.panel header, .drawer header, .sheet header { display: flex; justify-content: space-between; align-items: center; }
+.ptitle { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; }
+.p-lighting .ptitle .ic { color: var(--c-lighting); }
+.p-lighting { border-top: 3px solid var(--c-lighting); }
+.iconbtn { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); }
+.block { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; align-items: center; gap: 10px; } .between { justify-content: space-between; }
+.val { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; } .val .ic { color: var(--c-lighting); }
+.val.small { font-size: 12px; font-weight: 500; color: var(--text-3); }
+.tiny { font-size: 11px; color: var(--text-3); }
+.tod { position: relative; height: 26px; }
+.tod-track { position: absolute; left: 0; right: 0; top: 8px; height: 10px; border-radius: var(--r-pill); background: linear-gradient(90deg, #1e2a4a 0%, #f59e8b 5.6%, #9ad7f7 16.7%, #7cc7f5 33%, #ffd27a 60%, #ff9f5a 70%, #9b6bd6 75%, #1e2a4a 86%, #121a33 100%); box-shadow: inset 0 0 0 1px #fff2; }
+.tod-thumb { position: absolute; top: 0; width: 26px; height: 26px; margin-left: -13px; border-radius: 50%; background: #fff; color: var(--c-lighting); display: grid; place-items: center; box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-lighting) 45%, transparent), 0 4px 12px #0006; }
+.months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+.months span { display: grid; place-items: center; height: 26px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--text-3); background: rgba(255, 255, 255, 0.06); }
+.months span.on { background: var(--c-lighting); color: #2a1a00; }
+.scenes { display: flex; gap: 6px; flex-wrap: wrap; }
+.scenes button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: var(--r-pill); font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--glass-line); }
+.scenes button.on { background: color-mix(in srgb, var(--c-lighting) 30%, transparent); border-color: var(--c-lighting); }
+.rooms { gap: 4px; overflow: hidden; }
+.room { display: grid; grid-template-columns: 1fr 70px 14px 40px; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; font-size: 14px; color: var(--text-2); }
+.room.on { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.dim { height: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); overflow: hidden; } .dim div { height: 100%; background: var(--c-lighting); }
+.kelvin { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px #ffb46b99; }
+.switch { position: relative; width: 40px; height: 24px; border-radius: 24px; background: rgba(255, 255, 255, 0.18); transition: background var(--fast); }
+.switch i { position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px #0005; }
+.switch.on { background: var(--c-lighting); } .switch.on i { left: 19px; }
+
+/* ---------- Minimap ---------- */
+.minimap { position: absolute; left: 18px; bottom: 18px; padding: 10px 12px 12px; border-radius: var(--r-lg); z-index: 3; }
+.mm-head { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 6px; } .mm-n { display: inline-flex; gap: 4px; color: var(--text-3); }
+
+/* ---------- Bottom dock ---------- */
+.bottom { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; align-items: flex-end; gap: 12px; z-index: 3; pointer-events: none; }
+.bottom > * { pointer-events: auto; }
+.bottom.right-shift { padding-left: 440px; }
+.modes { display: flex; padding: 5px; border-radius: var(--r-pill); gap: 4px; }
+.modes button { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: var(--r-pill); font-size: 13px; font-weight: 700; color: var(--text-2); }
+.modes button.on { background: #fff; color: #17151f; }
+.dock { display: flex; gap: 8px; padding: 8px; border-radius: 26px; }
+.tool { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 72px; padding: 6px 0 4px; border-radius: 18px; transition: transform var(--fast) var(--spring); }
+.tool:hover { transform: translateY(-3px); }
+.tool-ic { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 15px; color: #fff; background: linear-gradient(160deg, color-mix(in srgb, var(--c) 70%, white), var(--c)); box-shadow: 0 6px 16px color-mix(in srgb, var(--c) 45%, transparent), inset 0 1px 0 #fff6; }
+.tool-label { font-size: 12px; font-weight: 700; color: var(--text-2); }
+.tool.active { background: rgba(255, 255, 255, 0.12); }
+.tool.active .tool-ic { box-shadow: 0 0 0 3px #fff, 0 8px 26px color-mix(in srgb, var(--c) 70%, transparent); }
+.tool.active .tool-label { color: #fff; }
+.t-style { --c: var(--c-style); } .t-furniture { --c: var(--c-furniture); } .t-lighting { --c: var(--c-lighting); } .t-views { --c: var(--c-views); } .t-share { --c: var(--c-share); }
+.hints { position: absolute; right: 18px; bottom: 6px; display: flex; gap: 10px; padding: 8px 12px; border-radius: var(--r-pill); background: rgba(10, 8, 18, 0.45); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+
+/* ---------- Catalogue drawer ---------- */
+.drawer { position: absolute; top: 76px; left: 18px; bottom: 18px; width: 440px; border-radius: var(--r-lg); padding: 16px; z-index: 4; display: flex; flex-direction: column; gap: 12px; border-top: 3px solid var(--c-furniture); }
+.p-furniture .ptitle .ic { color: var(--c-furniture); }
+.search { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border-radius: var(--r-pill); background: rgba(255, 255, 255, 0.08); color: var(--text-3); font-size: 14px; }
+.cats { display: flex; gap: 6px; flex-wrap: wrap; }
+.cats button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: var(--r-pill); font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, 0.07); }
+.cats button.on { background: var(--c-furniture); color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--c-furniture) 50%, transparent); }
+.stylefilter { display: flex; gap: 6px; flex-wrap: wrap; }
+.sf { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--r-pill); font-size: 12px; color: var(--text-3); border: 1px solid var(--glass-line); }
+.sf i { width: 8px; height: 8px; border-radius: 50%; }
+.sf.on { color: #fff; border-color: color-mix(in srgb, var(--c-style) 70%, transparent); background: color-mix(in srgb, var(--c-style) 22%, transparent); }
+.cards { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: max-content; gap: 10px; overflow: hidden; flex: 1; align-content: start; }
+.card { border-radius: var(--r-md); background: rgba(255, 255, 255, 0.06); border: 1px solid var(--glass-line); overflow: hidden; }
+.card.sel { border-color: var(--c-furniture); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-furniture) 50%, transparent); }
+.thumb { position: relative; height: 64px; display: grid; place-items: center; }
+.thumb-ic { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: rgba(20, 18, 30, 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.badge { position: absolute; left: 8px; top: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: var(--r-pill); font-size: 10px; font-weight: 800; background: var(--c-furniture); }
+.cbody { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 2px; }
+.cbody b { font-size: 13px; } .cbody > span { font-size: 11px; color: var(--text-3); }
+.crow { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.crow .fdot { width: 14px; height: 14px; }
+.cprice { font-weight: 800; color: var(--c-price); font-variant-numeric: tabular-nums; font-size: 14px; }
+.drawer-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; border-top: 1px solid var(--glass-line); font-size: 12px; color: var(--text-3); }
+.toast { position: absolute; top: 84px; left: calc(50% + 220px); transform: translateX(-50%); display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: var(--r-pill); font-size: 14px; z-index: 4; border-color: color-mix(in srgb, var(--c-furniture) 60%, transparent); }
+.toast .ic { color: var(--c-furniture); }
+
+/* ---------- Phones ---------- */
+.phones { display: flex; gap: 48px; flex-wrap: wrap; }
+.phone { width: 414px; height: 868px; padding: 12px; border-radius: 56px; background: #050507; box-shadow: 0 0 0 2px #2a2a33, 0 30px 80px #000c; }
+.screen { position: relative; width: 390px; height: 844px; border-radius: 44px; overflow: hidden; background-size: cover; background-position: center; }
+.screen.dimmed::before { content: ''; position: absolute; inset: 0; background: rgba(10, 8, 20, 0.25); }
+.p-top { position: absolute; top: 54px; left: 14px; right: 14px; display: flex; justify-content: space-between; z-index: 3; }
+.look-hint { position: absolute; right: 18px; top: 150px; display: inline-flex; gap: 6px; align-items: center; padding: 6px 12px; border-radius: var(--r-pill); font-size: 12px; font-weight: 600; background: rgba(10, 8, 18, 0.45); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.joystick { position: absolute; left: 22px; bottom: 300px; width: 120px; height: 120px; border-radius: 50%; background: rgba(20, 18, 30, 0.35); border: 2px solid rgba(255, 255, 255, 0.35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.joystick .knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -38px 0 0 -14px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #e8e4f0); box-shadow: 0 6px 18px #0007, 0 0 0 6px rgba(255, 255, 255, 0.18); }
+.sheet { position: absolute; left: 10px; right: 10px; bottom: 98px; padding: 10px 16px 16px; border-radius: 26px; z-index: 3; border-top: 3px solid var(--c-furniture); }
+.sheet.tall { display: flex; flex-direction: column; gap: 14px; border-top-color: var(--c-views); }
+.handle { width: 40px; height: 5px; margin: 0 auto 10px; border-radius: 5px; background: rgba(255, 255, 255, 0.35); }
+.s-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+.s-row h3 { margin: 8px 0 2px; font-size: 16px; } .muted { font-size: 12px; color: var(--text-3); }
+.s-price { font-size: 24px; font-weight: 800; color: var(--c-price); font-variant-numeric: tabular-nums; }
+.actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 14px; }
+.actions button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0; border-radius: 16px; background: rgba(255, 255, 255, 0.08); font-size: 11px; font-weight: 700; }
+.actions .ic { color: var(--c-furniture); }
+.tabs { position: absolute; left: 10px; right: 10px; bottom: 16px; display: flex; justify-content: space-between; padding: 6px; border-radius: 26px; z-index: 3; }
+.tabs .tool { width: 68px; } .tabs .tool-ic { width: 40px; height: 40px; border-radius: 13px; } .tabs .tool-label { font-size: 11px; }
+.p-views .ptitle .ic { color: var(--c-views); }
+.views { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.view { position: relative; border-radius: 16px; overflow: hidden; height: 96px; border: 2px solid transparent; }
+.view img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.view span { position: absolute; left: 8px; bottom: 8px; display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border-radius: var(--r-pill); font-size: 12px; font-weight: 700; background: rgba(10, 8, 18, 0.6); }
+.view.on { border-color: var(--c-views); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-views) 40%, transparent); }
+
+
+/* ---------- Design language sheet ---------- */
+.sheetgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 1440px; }
+.spec { padding: 20px; border-radius: 20px; background: #fff; color: #1b1a22; }
+.spec.dark { background: linear-gradient(135deg, #3a3346, #1b1824); color: #fff; }
+.spec h4 { margin: 0 0 14px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6; }
+.colors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.color { display: flex; align-items: center; gap: 10px; }
+.color span { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; color: #fff; }
+.color b { font-size: 14px; } .color code { font-size: 11px; opacity: 0.6; display: block; }
+.color { flex-wrap: wrap; }
+.stack { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.type p { margin: 0 0 8px; }
+
+</style></head><body>
+<div class="review-head">
+  <h1>Ruang <em>interface mockup</em></h1>
+  <p>Static mockup for sign-off. The backgrounds are a CC0 panorama (Poly Haven <i>relax_inn_seaview_suite</i>) standing in for the 3D view; item names, prices and the minimap come from the real catalogue and Type A plan. Generated by <code>npm run build:mockup</code>.</p>
+</div>
+<section><h2><span class="num">1</span>Desktop · walking, looking at a curtain, lighting panel open</h2>
+<div class="frame desktop" style="background-image:url('img/backdrop-desktop.jpg')">
+  
+  <div class="topbar">
+    <div class="group">
+      <div class="logo glass"><span class="mark">R</span><span class="word">Ruang</span></div>
+      <button class="chip glass"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M13 13.74a2 2 0 0 1-2 0L2.5 8.87a1 1 0 0 1 0-1.74L11 2.26a2 2 0 0 1 2 0l8.5 4.87a1 1 0 0 1 0 1.74z" />
+  <path d="m20 14.285 1.5.845a1 1 0 0 1 0 1.74L13 21.74a2 2 0 0 1-2 0l-8.5-4.87a1 1 0 0 1 0-1.74l1.5-.845" />
+</svg>Type A · 900 sf<svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></button>
+      <button class="chip glass c-style"><i class="dot" style="background:var(--c-style)"></i>Quiet Luxury<svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></button>
+      <button class="chip glass c-views"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2 12q2.5 2 5 0t5 0 5 0 5 0" />
+  <path d="M2 19q2.5 2 5 0t5 0 5 0 5 0" />
+  <path d="M2 5q2.5 2 5 0t5 0 5 0 5 0" />
+</svg>Beach<svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></button>
+    </div>
+    <div class="group">
+      <div class="budget glass"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg><span>34 items in view</span><b>RM86,340</b></div>
+      <button class="btn glass c-share"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg>Save &amp; share</button>
+      <button class="cta"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" />
+  <circle cx="12" cy="13" r="3" />
+</svg>Photo mode</button>
+    </div>
+  </div>
+  <div class="hover-outline" style="left:676px;top:160px;width:224px;height:520px"></div>
+  
+  <div class="pricecard glass" style="left:356px;top:214px">
+    <div class="pc-top"><span class="tag c-furniture">Curtains</span><span class="brand">Kain House</span></div>
+    <h3>Kain Day & Night Curtains</h3>
+    <div class="pc-price"><b>RM979</b><span>Balcony door · 2.9 m wide</span></div>
+    <div class="pc-fin"><span class="label">Finish</span><div class="fdots"><span class="fdot on" style="background-image:url('../moodboards/swatches/linenOat.jpg');background-size:cover" title="Oat linen"></span><span class="fdot" style="background-image:url('../moodboards/swatches/cottonWhite.jpg');background-size:cover" title="Washed cotton"></span><span class="fdot" style="background-image:url('../moodboards/swatches/linenStone.jpg');background-size:cover" title="Stone linen"></span><span class="fdot" style="background-image:url('../moodboards/swatches/linenCharcoal.jpg');background-size:cover" title="Charcoal linen"></span><span class="fdot" style="background-image:url('../moodboards/swatches/velvetMoss.jpg');background-size:cover" title="Moss velvet"></span></div><span class="fname">Oat linen</span></div>
+    <div class="pc-keys"><span class="key"><kbd>E</kbd>Pick up</span><span class="key"><kbd>R</kbd>Rotate</span><span class="key"><kbd>F</kbd>Finish</span><span class="key"><kbd>C</kbd>Swap</span><span class="key"><kbd>H</kbd>Hide</span></div>
+  </div>
+  <div class="crosshair"><i></i></div>
+  
+  <aside class="panel glass p-lighting">
+    <header><span class="ptitle"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg>Lighting</span><button class="iconbtn"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M18 6 6 18" />
+  <path d="m6 6 12 12" />
+</svg></button></header>
+    <div class="block">
+      <div class="row between"><span class="label">Time of day</span><span class="val"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 10V2" />
+  <path d="m4.93 10.93 1.41 1.41" />
+  <path d="M2 18h2" />
+  <path d="M20 18h2" />
+  <path d="m19.07 10.93-1.41 1.41" />
+  <path d="M22 22H2" />
+  <path d="m16 6-4 4-4-4" />
+  <path d="M16 18a4 4 0 0 0-8 0" />
+</svg>17:40</span></div>
+      <div class="tod"><div class="tod-track"></div><div class="tod-thumb" style="left:64.8%"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg></div></div>
+      <div class="row between tiny"><span>06:00</span><span>Sunrise 7:03 · Sunset 19:07</span><span>24:00</span></div>
+    </div>
+    <div class="block">
+      <div class="row between"><span class="label">Month</span><span class="val small">Sun passes south of overhead</span></div>
+      <div class="months"><span class="">J</span><span class="">F</span><span class="">M</span><span class="">A</span><span class="">M</span><span class="">J</span><span class="">J</span><span class="">A</span><span class="">S</span><span class="on">O</span><span class="">N</span><span class="">D</span></div>
+    </div>
+    <div class="block">
+      <div class="row between"><span class="label">Scenes</span></div>
+      <div class="scenes"><button class="on"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 10V2" />
+  <path d="m4.93 10.93 1.41 1.41" />
+  <path d="M2 18h2" />
+  <path d="M20 18h2" />
+  <path d="m19.07 10.93-1.41 1.41" />
+  <path d="M22 22H2" />
+  <path d="m16 6-4 4-4-4" />
+  <path d="M16 18a4 4 0 0 0-8 0" />
+</svg>Evening</button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m17 2-5 5-5-5" />
+  <rect width="20" height="15" x="2" y="7" rx="2" />
+</svg>Movie</button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+  <path d="M9 18h6" />
+  <path d="M10 22h4" />
+</svg>All on</button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+</svg>All off</button></div>
+    </div>
+    <div class="block rooms">
+      <div class="room on">
+          <span class="rname">Living</span>
+          <div class="dim"><div style="width:70%"></div></div>
+          <span class="kelvin" title="2700 K" style="background:#FFB46B"></span>
+          <span class="switch on"><i></i></span>
+        </div><div class="room on">
+          <span class="rname">Dining</span>
+          <div class="dim"><div style="width:55%"></div></div>
+          <span class="kelvin" title="2700 K" style="background:#FFB46B"></span>
+          <span class="switch on"><i></i></span>
+        </div><div class="room">
+          <span class="rname">Kitchen</span>
+          <div class="dim"><div style="width:0%"></div></div>
+          <span class="kelvin" title="4000 K" style="background:#FFE9CF"></span>
+          <span class="switch"><i></i></span>
+        </div><div class="room on">
+          <span class="rname">Bedroom 1</span>
+          <div class="dim"><div style="width:30%"></div></div>
+          <span class="kelvin" title="2700 K" style="background:#FFB46B"></span>
+          <span class="switch on"><i></i></span>
+        </div><div class="room">
+          <span class="rname">Bedroom 2</span>
+          <div class="dim"><div style="width:0%"></div></div>
+          <span class="kelvin" title="3000 K" style="background:#FFC98F"></span>
+          <span class="switch"><i></i></span>
+        </div><div class="room">
+          <span class="rname">Study</span>
+          <div class="dim"><div style="width:0%"></div></div>
+          <span class="kelvin" title="4000 K" style="background:#FFE9CF"></span>
+          <span class="switch"><i></i></span>
+        </div><div class="room">
+          <span class="rname">Toilets</span>
+          <div class="dim"><div style="width:0%"></div></div>
+          <span class="kelvin" title="4000 K" style="background:#FFE9CF"></span>
+          <span class="switch"><i></i></span>
+        </div><div class="room on">
+          <span class="rname">Balcony</span>
+          <div class="dim"><div style="width:40%"></div></div>
+          <span class="kelvin" title="3000 K" style="background:#FFC98F"></span>
+          <span class="switch on"><i></i></span>
+        </div>
+    </div>
+  </aside>
+  <div class="minimap glass"><div class="mm-head"><span>Living</span><span class="mm-n"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+  <path d="M15 5.764v15" />
+  <path d="M9 3.236v15" />
+</svg>N</span></div><svg viewBox="-6 -6 169.50000000000003 203.62500000000003" width="170" height="204">
+    <polygon points="103.3,0.0 157.5,0.0 157.5,21.0 103.3,21.0" fill="rgba(255,255,255,.05)"/><polygon points="103.3,21.0 157.5,21.0 157.5,98.0 103.3,98.0" fill="rgba(56,189,248,.22)"/><polygon points="103.3,98.0 157.5,98.0 157.5,174.1 124.3,174.1 124.3,145.3 103.3,145.3" fill="rgba(255,255,255,.05)"/><polygon points="89.3,145.3 124.3,145.3 124.3,191.6 89.3,191.6" fill="rgba(255,255,255,.05)"/><polygon points="69.1,145.3 89.3,145.3 89.3,191.6 69.1,191.6" fill="rgba(255,255,255,.05)"/><polygon points="0.0,13.1 54.3,13.1 54.3,98.0 0.0,98.0" fill="rgba(255,255,255,.05)"/><polygon points="54.3,13.1 103.3,13.1 103.3,77.0 54.3,77.0" fill="rgba(255,255,255,.05)"/><polygon points="54.3,77.0 103.3,77.0 103.3,98.0 54.3,98.0" fill="rgba(255,255,255,.05)"/><polygon points="0.0,98.0 28.9,98.0 28.9,145.3 0.0,145.3" fill="rgba(255,255,255,.05)"/><polygon points="28.9,98.0 76.8,98.0 76.8,145.3 28.9,145.3" fill="rgba(255,255,255,.05)"/><polygon points="76.8,98.0 103.3,98.0 103.3,145.3 76.8,145.3" fill="rgba(255,255,255,.05)"/><polygon points="124.3,174.1 157.5,174.1 157.5,191.6 124.3,191.6" fill="rgba(255,255,255,.05)"/><line x1="0.0" y1="13.1" x2="103.3" y2="13.1" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="103.3" y1="0.0" x2="103.3" y2="77.0" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="157.5" y1="0.0" x2="157.5" y2="21.0" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="103.3" y1="21.0" x2="157.5" y2="21.0" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="157.5" y1="21.0" x2="157.5" y2="191.6" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="124.3" y1="174.1" x2="157.5" y2="174.1" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="124.3" y1="174.1" x2="124.3" y2="191.6" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="56.9" y1="191.6" x2="124.3" y2="191.6" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="69.1" y1="145.3" x2="69.1" y2="191.6" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/><line x1="89.3" y1="145.3" x2="89.3" y2="191.6" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/><line x1="0.0" y1="145.3" x2="56.9" y2="145.3" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="56.9" y1="145.3" x2="103.3" y2="145.3" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/><line x1="0.0" y1="13.1" x2="0.0" y2="145.3" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-linecap="square"/><line x1="54.3" y1="13.1" x2="54.3" y2="98.0" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/><line x1="54.3" y1="77.0" x2="103.3" y2="77.0" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/><line x1="0.0" y1="98.0" x2="103.3" y2="98.0" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/><line x1="28.9" y1="98.0" x2="28.9" y2="145.3" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/><line x1="76.8" y1="98.0" x2="76.8" y2="145.3" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/><line x1="103.3" y1="98.0" x2="103.3" y2="145.3" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linecap="square"/>
+    <path d="M 130.375 52.50000000000001 L 104.375 8.500000000000007 A 51 51 0 0 1 156.375 8.500000000000007 Z" fill="rgba(255,255,255,.22)"/>
+    <circle cx="130.375" cy="52.50000000000001" r="5.5" fill="#fff" stroke="#38BDF8" stroke-width="2.5"/>
+  </svg></div>
+  <div class="bottom">
+    <div class="modes glass"><button class="on"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z" />
+  <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z" />
+  <path d="M16 17h4" />
+  <path d="M4 13h4" />
+</svg>Walk</button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+  <path d="M15 5.764v15" />
+  <path d="M9 3.236v15" />
+</svg>Plan</button></div>
+    <div class="dock glass"><button class="tool t-style"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" />
+  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+</svg></span><span class="tool-label">Style</span></button><button class="tool t-furniture"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span><span class="tool-label">Furniture</span></button><button class="tool t-lighting active"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg></span><span class="tool-label">Lighting</span></button><button class="tool t-views"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+</svg></span><span class="tool-label">Views</span></button><button class="tool t-share"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg></span><span class="tool-label">Share</span></button></div>
+    <div class="hints"><span class="key"><kbd>WASD</kbd>Move</span><span class="key"><kbd>Mouse</kbd>Look</span><span class="key"><kbd>Shift</kbd>Run</span><span class="key"><kbd>Tab</kbd>Plan</span></div>
+  </div>
+</div></section>
+<section><h2><span class="num">2</span>Desktop · catalogue open, comparing sofas across styles</h2>
+<div class="frame desktop" style="background-image:url('img/backdrop-desktop.jpg')">
+  
+  <div class="topbar">
+    <div class="group">
+      <div class="logo glass"><span class="mark">R</span><span class="word">Ruang</span></div>
+      <button class="chip glass"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M13 13.74a2 2 0 0 1-2 0L2.5 8.87a1 1 0 0 1 0-1.74L11 2.26a2 2 0 0 1 2 0l8.5 4.87a1 1 0 0 1 0 1.74z" />
+  <path d="m20 14.285 1.5.845a1 1 0 0 1 0 1.74L13 21.74a2 2 0 0 1-2 0l-8.5-4.87a1 1 0 0 1 0-1.74l1.5-.845" />
+</svg>Type A · 900 sf<svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></button>
+      <button class="chip glass c-style"><i class="dot" style="background:var(--c-style)"></i>Quiet Luxury<svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></button>
+      <button class="chip glass c-views"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2 12q2.5 2 5 0t5 0 5 0 5 0" />
+  <path d="M2 19q2.5 2 5 0t5 0 5 0 5 0" />
+  <path d="M2 5q2.5 2 5 0t5 0 5 0 5 0" />
+</svg>Beach<svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></button>
+    </div>
+    <div class="group">
+      <div class="budget glass"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg><span>34 items in view</span><b>RM86,340</b></div>
+      <button class="btn glass c-share"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg>Save &amp; share</button>
+      <button class="cta"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" />
+  <circle cx="12" cy="13" r="3" />
+</svg>Photo mode</button>
+    </div>
+  </div>
+  
+  <aside class="drawer glass p-furniture">
+    <header><span class="ptitle"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg>Catalogue</span><button class="iconbtn"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M18 6 6 18" />
+  <path d="m6 6 12 12" />
+</svg></button></header>
+    <div class="search"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m21 21-4.34-4.34" />
+  <circle cx="11" cy="11" r="8" />
+</svg><span>Search 148 pieces</span></div>
+    <div class="cats"><button class="on"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg>Sofas</button><button class=""><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3" />
+  <path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M5 18v2" />
+  <path d="M19 18v2" />
+</svg>Chairs</button><button class=""><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 2v5" />
+  <path d="M14.829 15.998a3 3 0 1 1-5.658 0" />
+  <path d="M20.92 14.606A1 1 0 0 1 20 16H4a1 1 0 0 1-.92-1.394l3-7A1 1 0 0 1 7 7h10a1 1 0 0 1 .92.606z" />
+</svg>Lighting</button><button class=""><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8" />
+  <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" />
+  <path d="M12 4v6" />
+  <path d="M2 18h20" />
+</svg>Beds</button><button class=""><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2 12h20" />
+  <path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" />
+  <path d="m4 8 16-4" />
+  <path d="m8.86 6.78-.45-1.81a2 2 0 0 1 1.45-2.43l1.94-.48a2 2 0 0 1 2.43 1.46l.45 1.8" />
+</svg>Kitchen</button><button class=""><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 4 8 6" />
+  <path d="M17 19v2" />
+  <path d="M2 12h20" />
+  <path d="M7 19v2" />
+  <path d="M9 5 7.621 3.621A2.121 2.121 0 0 0 4 5v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />
+</svg>Bath</button><button class=""><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M11 20a10 10 0 0010-10 25.9 25.9 0 00-1.04-7.281 1 1 0 00-1.755-.325C15.833 5.5 13 5.5 9.8 6.1A7 7 0 0011 20" />
+  <path d="M2 21a5 5 0 012.911-4.544C7.613 15.212 8.351 15.24 11 13" />
+</svg>Plants</button></div>
+    <div class="stylefilter"><span class="sf on"><i style="background:#3F3D3A"></i>Muji</span><span class="sf"><i style="background:#5E4838"></i>Japanese</span><span class="sf"><i style="background:#6B4A33"></i>Brutalist</span><span class="sf"><i style="background:#3B3A39"></i>Minimalist</span><span class="sf on"><i style="background:#6B4A33"></i>Quiet Luxury</span></div>
+    <div class="cards"><div class="card sel">
+        <div class="thumb" style="background-image:url('../moodboards/swatches/cottonWhite.jpg');background-size:cover"><span class="thumb-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="34"
+  height="34"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span></div>
+        <div class="cbody"><b>Hinata 3-Seat Sofa</b><span>Kinari Living · 200 cm</span>
+        <div class="crow"><div class="fdots"><span class="fdot on" style="background-image:url('../moodboards/swatches/cottonWhite.jpg');background-size:cover" title="Washed cotton"></span><span class="fdot" style="background-image:url('../moodboards/swatches/linenOat.jpg');background-size:cover" title="Oat linen"></span><span class="fdot" style="background-image:url('../moodboards/swatches/linenCharcoal.jpg');background-size:cover" title="Charcoal linen"></span></div><span class="cprice">RM3,799</span></div></div>
+      </div><div class="card">
+        <div class="thumb" style="background-image:url('../moodboards/swatches/linenStone.jpg');background-size:cover"><span class="thumb-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="34"
+  height="34"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span></div>
+        <div class="cbody"><b>Engawa Low Sofa</b><span>Washitsu Atelier · 210 cm</span>
+        <div class="crow"><div class="fdots"><span class="fdot on" style="background-image:url('../moodboards/swatches/linenStone.jpg');background-size:cover" title="Stone linen"></span><span class="fdot" style="background-image:url('../moodboards/swatches/linenCharcoal.jpg');background-size:cover" title="Charcoal linen"></span><span class="fdot" style="background-image:url('../moodboards/swatches/cottonWhite.jpg');background-size:cover" title="Washed cotton"></span></div><span class="cprice">RM5,249</span></div></div>
+      </div><div class="card">
+        <div class="thumb" style="background-image:url('../moodboards/swatches/leatherBlack.jpg');background-size:cover"><span class="thumb-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="34"
+  height="34"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span></div>
+        <div class="cbody"><b>Slab 3-Seat Sofa</b><span>Monolith & Form · 220 cm</span>
+        <div class="crow"><div class="fdots"><span class="fdot on" style="background-image:url('../moodboards/swatches/leatherBlack.jpg');background-size:cover" title="Black aniline leather"></span><span class="fdot" style="background-image:url('../moodboards/swatches/leatherCognac.jpg');background-size:cover" title="Cognac leather"></span><span class="fdot" style="background-image:url('../moodboards/swatches/woolGrey.jpg');background-size:cover" title="Felted grey wool"></span></div><span class="cprice">RM6,949</span></div></div>
+      </div><div class="card">
+        <div class="thumb" style="background-image:url('../moodboards/swatches/linenStone.jpg');background-size:cover"><span class="thumb-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="34"
+  height="34"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span></div>
+        <div class="cbody"><b>Garis 3-Seat Sofa</b><span>Garis Studio · 210 cm</span>
+        <div class="crow"><div class="fdots"><span class="fdot on" style="background-image:url('../moodboards/swatches/linenStone.jpg');background-size:cover" title="Stone linen"></span><span class="fdot" style="background-image:url('../moodboards/swatches/woolGrey.jpg');background-size:cover" title="Felted grey wool"></span><span class="fdot" style="background-image:url('../moodboards/swatches/cottonWhite.jpg');background-size:cover" title="Washed cotton"></span></div><span class="cprice">RM2,799</span></div></div>
+      </div><div class="card">
+        <div class="thumb" style="background-image:url('../moodboards/swatches/boucleIvory.jpg');background-size:cover"><span class="thumb-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="34"
+  height="34"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span><span class="badge"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="3"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 6 9 17l-5-5" />
+</svg>In your living room</span></div>
+        <div class="cbody"><b>Senja Bouclé Sofa</b><span>Maison Tenang · 230 cm</span>
+        <div class="crow"><div class="fdots"><span class="fdot on" style="background-image:url('../moodboards/swatches/boucleIvory.jpg');background-size:cover" title="Ivory bouclé"></span><span class="fdot" style="background-image:url('../moodboards/swatches/boucleSand.jpg');background-size:cover" title="Sand bouclé"></span><span class="fdot" style="background-image:url('../moodboards/swatches/linenOat.jpg');background-size:cover" title="Oat linen"></span></div><span class="cprice">RM13,999</span></div></div>
+      </div></div>
+    <div class="drawer-foot"><span>Swapping keeps the sofa where it is.</span><button class="cta"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M14 4a1 1 0 0 1 1-1" />
+  <path d="M15 10a1 1 0 0 1-1-1" />
+  <path d="M21 4a1 1 0 0 0-1-1" />
+  <path d="M21 9a1 1 0 0 1-1 1" />
+  <path d="m3 7 3 3 3-3" />
+  <path d="M6 10V5a2 2 0 0 1 2-2h2" />
+  <rect x="3" y="14" width="7" height="7" rx="1" />
+</svg>Swap in Hinata</button></div>
+  </aside>
+  <div class="crosshair"><i></i></div>
+  <div class="toast glass"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
+  <path d="M20 2v4" />
+  <path d="M22 4h-4" />
+  <circle cx="4" cy="20" r="2" />
+</svg>Comparing 5 sofas · Hinata is <b>RM10,200</b> less than yours</div>
+  <div class="bottom right-shift">
+    <div class="modes glass"><button class="on"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z" />
+  <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z" />
+  <path d="M16 17h4" />
+  <path d="M4 13h4" />
+</svg>Walk</button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+  <path d="M15 5.764v15" />
+  <path d="M9 3.236v15" />
+</svg>Plan</button></div>
+    <div class="dock glass"><button class="tool t-style"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" />
+  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+</svg></span><span class="tool-label">Style</span></button><button class="tool t-furniture active"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span><span class="tool-label">Furniture</span></button><button class="tool t-lighting"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg></span><span class="tool-label">Lighting</span></button><button class="tool t-views"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+</svg></span><span class="tool-label">Views</span></button><button class="tool t-share"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg></span><span class="tool-label">Share</span></button></div>
+  </div>
+</div></section>
+<section><h2><span class="num">3</span>Phone · joystick to walk, tap to select · and the views sheet</h2><div class="phones">
+<div class="phone"><div class="screen" style="background-image:url('img/backdrop-phone.jpg')">
+  <div class="p-top">
+    <div class="logo glass small"><span class="mark">R</span><span class="word">Ruang</span></div>
+    <div class="budget glass small"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg><b>RM86,340</b></div>
+  </div>
+  <div class="hover-outline" style="left:240px;top:312px;width:100px;height:212px"></div>
+  <div class="crosshair small"><i></i></div>
+  <div class="look-hint"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
+  <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
+  <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" />
+  <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+</svg>Drag to look</div>
+  <div class="joystick"><div class="knob"></div></div>
+  <div class="sheet glass">
+    <div class="handle"></div>
+    <div class="s-row"><div><span class="tag c-furniture">Curtains</span><h3>Kain Day & Night Curtains</h3><span class="muted">Kain House · Balcony door</span></div><b class="s-price">RM979</b></div>
+    <div class="actions">
+      <button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 2v20" />
+  <path d="m15 19-3 3-3-3" />
+  <path d="m19 9 3 3-3 3" />
+  <path d="M2 12h20" />
+  <path d="m5 9-3 3 3 3" />
+  <path d="m9 5 3-3 3 3" />
+</svg><span>Move</span></button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+</svg><span>Rotate</span></button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M14 4a1 1 0 0 1 1-1" />
+  <path d="M15 10a1 1 0 0 1-1-1" />
+  <path d="M21 4a1 1 0 0 0-1-1" />
+  <path d="M21 9a1 1 0 0 1-1 1" />
+  <path d="m3 7 3 3 3-3" />
+  <path d="M6 10V5a2 2 0 0 1 2-2h2" />
+  <rect x="3" y="14" width="7" height="7" rx="1" />
+</svg><span>Swap</span></button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" />
+  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+</svg><span>Finish</span></button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
+  <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+  <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
+  <path d="m2 2 20 20" />
+</svg><span>Hide</span></button>
+    </div>
+  </div>
+  <nav class="tabs glass"><button class="tool t-style"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" />
+  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+</svg></span><span class="tool-label">Style</span></button><button class="tool t-furniture active"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span><span class="tool-label">Furniture</span></button><button class="tool t-lighting"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg></span><span class="tool-label">Lighting</span></button><button class="tool t-views"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+</svg></span><span class="tool-label">Views</span></button><button class="tool t-share"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg></span><span class="tool-label">Share</span></button></nav>
+</div></div>
+<div class="phone"><div class="screen dimmed" style="background-image:url('img/backdrop-phone.jpg')">
+  <div class="p-top">
+    <div class="logo glass small"><span class="mark">R</span><span class="word">Ruang</span></div>
+    <div class="budget glass small"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg><b>RM86,340</b></div>
+  </div>
+  <div class="sheet tall glass p-views">
+    <div class="handle"></div>
+    <header><span class="ptitle"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+</svg>Outside the windows</span></header>
+    <div class="views"><div class="view"><img src="../moodboards/views/mossy_forest.jpg" alt=""><span><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z" />
+  <path d="M7 16v6" />
+  <path d="M13 19v3" />
+  <path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5" />
+</svg>Rainforest</span></div><div class="view"><img src="../moodboards/views/drakensberg_solitary_mountain.jpg" alt=""><span><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+</svg>Mountain</span></div><div class="view on"><img src="../moodboards/views/illovo_beach_balcony.jpg" alt=""><span><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M2 12q2.5 2 5 0t5 0 5 0 5 0" />
+  <path d="M2 19q2.5 2 5 0t5 0 5 0 5 0" />
+  <path d="M2 5q2.5 2 5 0t5 0 5 0 5 0" />
+</svg>Beach</span></div><div class="view"><img src="../moodboards/views/rooftop_night.jpg" alt=""><span><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 12h4" />
+  <path d="M10 8h4" />
+  <path d="M14 21v-3a2 2 0 0 0-4 0v3" />
+  <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2" />
+  <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
+</svg>KL skyline</span></div></div>
+    <div class="block">
+      <div class="row between"><span class="label">Time of day</span><span class="val"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 10V2" />
+  <path d="m4.93 10.93 1.41 1.41" />
+  <path d="M2 18h2" />
+  <path d="M20 18h2" />
+  <path d="m19.07 10.93-1.41 1.41" />
+  <path d="M22 22H2" />
+  <path d="m16 6-4 4-4-4" />
+  <path d="M16 18a4 4 0 0 0-8 0" />
+</svg>17:40</span></div>
+      <div class="tod"><div class="tod-track"></div><div class="tod-thumb" style="left:64.8%"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg></div></div>
+    </div>
+    <div class="block">
+      <div class="row between"><span class="label">Lights</span><span class="val small">4 of 8 rooms on</span></div>
+      <div class="scenes"><button class="on"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 10V2" />
+  <path d="m4.93 10.93 1.41 1.41" />
+  <path d="M2 18h2" />
+  <path d="M20 18h2" />
+  <path d="m19.07 10.93-1.41 1.41" />
+  <path d="M22 22H2" />
+  <path d="m16 6-4 4-4-4" />
+  <path d="M16 18a4 4 0 0 0-8 0" />
+</svg>Evening</button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m17 2-5 5-5-5" />
+  <rect width="20" height="15" x="2" y="7" rx="2" />
+</svg>Movie</button><button><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+</svg>Off</button></div>
+    </div>
+  </div>
+  <nav class="tabs glass"><button class="tool t-style"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" />
+  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+</svg></span><span class="tool-label">Style</span></button><button class="tool t-furniture"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span><span class="tool-label">Furniture</span></button><button class="tool t-lighting"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg></span><span class="tool-label">Lighting</span></button><button class="tool t-views active"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+</svg></span><span class="tool-label">Views</span></button><button class="tool t-share"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg></span><span class="tool-label">Share</span></button></nav>
+</div></div></div></section>
+<section><h2><span class="num">4</span>Design language</h2>
+<div class="sheetgrid">
+  <div class="spec"><h4>Tool colours</h4><div class="colors"><div class="color"><span style="background:var(--c-style)"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" />
+  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+</svg></span><b>Style</b><code>--c-style</code></div><div class="color"><span style="background:var(--c-furniture)"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span><b>Furniture</b><code>--c-furniture</code></div><div class="color"><span style="background:var(--c-lighting)"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg></span><b>Lighting</b><code>--c-lighting</code></div><div class="color"><span style="background:var(--c-views)"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+</svg></span><b>Views</b><code>--c-views</code></div><div class="color"><span style="background:var(--c-price)"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg></span><b>Prices</b><code>--c-price</code></div><div class="color"><span style="background:var(--c-share)"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg></span><b>Share</b><code>--c-share</code></div></div></div>
+  <div class="spec dark"><h4>Buttons</h4><div class="stack">
+    <button class="cta"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" />
+  <circle cx="12" cy="13" r="3" />
+</svg>Primary action</button>
+    <button class="btn glass c-share"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg>Tool action</button>
+    <button class="chip glass c-style"><i class="dot" style="background:var(--c-style)"></i>Selector chip<svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></button>
+    <div class="row"><span class="key"><kbd>E</kbd>Key hint</span><span class="switch on"><i></i></span><span class="switch"><i></i></span></div>
+  </div></div>
+  <div class="spec dark"><h4>Dock states</h4><div class="dock glass"><button class="tool t-style"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" />
+  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+</svg></span><span class="tool-label">Style</span></button><button class="tool t-furniture"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+  <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" />
+  <path d="M4 18v2" />
+  <path d="M20 18v2" />
+  <path d="M12 4v9" />
+</svg></span><span class="tool-label">Furniture</span></button><button class="tool t-lighting"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg></span><span class="tool-label">Lighting</span></button><button class="tool t-views active"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+</svg></span><span class="tool-label">Views</span></button><button class="tool t-share"><span class="tool-ic"><svg
+  class="ic"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg></span><span class="tool-label">Share</span></button></div></div>
+  <div class="spec"><h4>Type</h4><div class="type"><p style="font-size:28px;font-weight:800">Plus Jakarta Sans 800</p><p style="font-size:18px;font-weight:700">Panel titles 700</p><p style="font-size:14px">Body 400 / 500, tabular figures for prices: <b style="font-variant-numeric:tabular-nums">RM13,999</b></p></div></div>
+</div></section>
+</body></html>

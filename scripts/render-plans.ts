@@ -204,7 +204,7 @@ function checkTable(u: UnitPlan): string {
     return `<tr><td>${group.map((id) => u.rooms.find((r) => r.id === id)!.name).join(' + ')}</td><td>${g.toFixed(2)}</td><td>${area.toFixed(2)}</td><td class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'}</td></tr>`;
   });
   return `<table><thead><tr><th>Room area (m²)</th><th>Model</th><th>CAD</th><th></th></tr></thead><tbody>${rows.join('')}
-    <tr class="total"><td>Total</td><td>${total.toFixed(2)}</td><td>${u.schedule.totalM2.toFixed(2)}</td><td>${(total * 10.7639).toFixed(0)} sf</td></tr></tbody></table>
+    <tr class="total"><td>Total</td><td>${total.toFixed(2)}</td><td>${u.schedule.totalM2.toFixed(2)}</td><td>${(total * 10.7639).toFixed(1)} sf</td></tr></tbody></table>
     <table><thead><tr><th>Window glass (m²)</th><th>Model</th><th>CAD</th><th></th></tr></thead><tbody>${glazing.join('')}</tbody></table>`;
 }
 

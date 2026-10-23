@@ -1,0 +1,44 @@
+/* Ruang design tokens. Shared by the app and the static mockup in design/ui-mockup. */
+
+:root {
+  --font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* One colour per tool family, used everywhere that family appears. */
+  --c-style: #8b5cf6;
+  --c-furniture: #ff6b5b;
+  --c-lighting: #ffb020;
+  --c-views: #38bdf8;
+  --c-price: #22c55e;
+  --c-share: #ec4899;
+
+  /* Primary calls to action only. */
+  --grad-cta: linear-gradient(100deg, #ff6b5b 0%, #ec4899 52%, #8b5cf6 100%);
+
+  /* Frosted glass over the 3D view. */
+  --glass: rgba(20, 18, 30, 0.64);
+  --glass-strong: rgba(20, 18, 30, 0.82);
+  --glass-line: rgba(255, 255, 255, 0.13);
+  --glass-hi: rgba(255, 255, 255, 0.08);
+  --blur: blur(22px) saturate(160%);
+
+  --text: #ffffff;
+  --text-2: rgba(255, 255, 255, 0.74);
+  --text-3: rgba(255, 255, 255, 0.6);
+
+  /* 8-point spacing and radii. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-pill: 999px;
+
+  --shadow: 0 12px 40px rgba(8, 6, 20, 0.38), 0 2px 8px rgba(8, 6, 20, 0.25);
+  --spring: cubic-bezier(0.2, 0.9, 0.25, 1.15);
+  --fast: 160ms;
+  --slow: 260ms;
+}
