@@ -1,0 +1,16 @@
+{
+  "elMinDeg": -80.0,
+  "elMaxDeg": 10.0,
+  "uNorth": 0.66,
+  "hazeSRGB": [
+    0.6482,
+    0.666,
+    0.7216
+  ],
+  "groundSRGB": [
+    0.4913,
+    0.3929,
+    0.301
+  ],
+  "source": "drakensberg_solitary_mountain.jpg"
+}

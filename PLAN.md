@@ -14,7 +14,7 @@ and on a phone over the same Wi-Fi. It is not a buyer-facing product.
 | Unit order | Type A, then B1, then B |
 | Ceiling | 2.75 m clear |
 | Orientation | Balcony side (top of the sheets) faces north, so the B1 bay window faces east |
-| Floor level | Set per view: rainforest L5, mountain L12, beach L10, KL skyline L38 |
+| Floor level | Set per view: rainforest L5, mountain at ground level (a highland valley; every CC0 mountain panorama is shot from the ground), beach L10, KL skyline L38 |
 | Styles | Five: Muji-inspired Natural, Japanese, Brutalist, Minimalist, Quiet Luxury |
 | Prices | One dummy MYR price per item, estimated from online product prices; no renovation costs |
 | Editing | Everything movable, including kitchen modules, wardrobes and bathroom fittings |
@@ -53,22 +53,39 @@ and on a phone over the same Wi-Fi. It is not a buyer-facing product.
 ## Architecture (from Phase 1)
 
 - Vite, React and TypeScript, with three.js through React Three Fiber and drei. The baseline is WebGL2.
-- Realism: AgX tone mapping, N8AO ambient occlusion, soft shadows, SMAA, bevelled geometry, scanned
-  PBR textures, and dynamic resolution. Photo Mode uses three-gpu-pathtracer when standing still.
-- three-mesh-bvh for collision and hover hits. Zustand for state and undo. lz-string to encode layouts in share links.
-- A custom touch joystick, shown whenever the screen is touched, including on the laptop's touchscreen.
-- Sun position computed for Kuala Lumpur (3.14°N, 101.69°E) from the time of day and month.
-- Quality presets, targeting 60 fps on the Arc 130V at roughly 1080p internal resolution.
+  Zustand holds app state; per-frame scene state lives outside React (`src/render/registry.ts`).
+- The shell (walls, openings, joinery, floors, ceilings) is generated from `src/plan` by `src/shell/build.ts`
+  and checked by `npm run check:shell`. Collision is circle-against-boxes in plan space.
+- Light, in physically plausible ratios (sun ≈ 100,000 lux, sky about a quarter of that on a horizontal
+  surface, downlights about 150-300 lux):
+  - Sun: position computed for Kuala Lumpur (3.14°N, 101.69°E) from the time and month; shadow map.
+  - Sky: Preetham model with clouds, a twilight afterglow, and stars at night. The window view is a
+    panorama band composited under the sky and re-lit for the time of day.
+  - Daylight through each window, sliding door and glass partition is an area light whose brightness is
+    whatever a small camera sees outside it. Surfaces integrate the opening's shape, and each opening's
+    soft shadow map (variance shadow map) stops light going through walls.
+  - Bounce light from a probe per room, captured with the openings covered and rebuilt from scratch in two
+    passes after every change; reflections from a second, box-projected probe.
+  - Downlights are evaluated per room in the surface shaders, so they never light the next room
+    through a wall, and switching them never recompiles shaders.
+- Camera: auto exposure that adapts like an eye, white balance (neutral by day, warm-white under
+  downlights), AgX tone mapping, N8AO ambient occlusion and bloom (medium and high quality), SMAA, vignette.
+- Quality presets cap the internal resolution (about 1080p on medium) for the Arc 130V.
+- Planned for later phases: three-mesh-bvh for furniture hits, lz-string for share links, three-gpu-pathtracer for Photo Mode.
 
 ## Phases
 
-0. **Design sign-off** (done, awaiting approval): plan data and checks, catalogue and pricing, mood boards, interface mockup.
-1. **Walkable Type A**:
+0. **Design sign-off** (done, approved): plan data and checks, catalogue and pricing, mood boards, interface mockup.
+1. **Walkable Type A** (done, awaiting your walk-through):
    - The shell built from `src/plan`: walls, openings, doors, window frames and glass, skirting, ceiling.
    - Floor and wall finishes from one style pack.
    - First-person controls with collision and a touch joystick.
    - Physical sky and sun, plus one window view (mountain).
    - **Checkpoint:** you walk it on your laptop and judge scale and realism.
+   - Also built in Phase 1, ahead of plan: all five style shells, the time-of-day and month controls,
+     Auto/On/Off room lights, a tape measure, doors that open and close, quality presets and diagnostics.
+   - Known gaps: frame rate is untested on real hardware (this environment has no GPU); the B1 bay window
+     does not yet let in daylight (Phase 4); window shadows are deliberately soft approximations.
 2. **Furniture**:
    - Parametric generators and the scanned models.
    - Default layouts per style.
