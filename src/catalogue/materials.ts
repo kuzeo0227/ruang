@@ -34,7 +34,7 @@ export const MATERIALS = {
   // Woods
   oakLight: m('oakLight', 'Natural oak', 'wood', '#C9A87C', 1.0, ph('oak_veneer_01'), 0.55),
   ashWhite: m('ashWhite', 'White-washed ash', 'wood', '#DCCDB2', 1.0, ph('ash_veneer'), 0.6),
-  hinoki: m('hinoki', 'Hinoki cypress', 'wood', '#E2C9A0', 1.15, ph('hinoki_planks'), 0.6),
+  hinoki: m('hinoki', 'Hinoki cypress', 'wood', '#E2C9A0', 1.15, ph('oak_veneer_03'), 0.6),
   bamboo: m('bamboo', 'Bamboo', 'wood', '#CDB48A', 0.95, ph('bamboo_veneer'), 0.55),
   greyOak: m('greyOak', 'Grey-washed oak', 'wood', '#9C9086', 1.05, ph('grey_oak_veneer_01'), 0.6),
   smokedOak: m('smokedOak', 'Smoked oak', 'wood', '#5E4838', 1.1, ph('mocha_oak_veneer'), 0.5),
@@ -46,8 +46,8 @@ export const MATERIALS = {
   linenStone: m('linenStone', 'Stone linen', 'fabric', '#B7AE9F', 1.0, ph('rough_linen'), 0.9),
   linenCharcoal: m('linenCharcoal', 'Charcoal linen', 'fabric', '#4A4744', 1.0, ph('rough_linen'), 0.9),
   cottonWhite: m('cottonWhite', 'Washed cotton', 'fabric', '#EEEAE2', 0.9, acg('Fabric036'), 0.9),
-  boucleIvory: m('boucleIvory', 'Ivory bouclé', 'fabric', '#EEE7DA', 1.15, ph('wool_boucle'), 0.95),
-  boucleSand: m('boucleSand', 'Sand bouclé', 'fabric', '#D6C4A8', 1.15, ph('wool_boucle'), 0.95),
+  boucleIvory: m('boucleIvory', 'Ivory bouclé', 'fabric', '#EEE7DA', 1.15, acg('Fabric045'), 0.95),
+  boucleSand: m('boucleSand', 'Sand bouclé', 'fabric', '#D6C4A8', 1.15, acg('Fabric045'), 0.95),
   velvetMoss: m('velvetMoss', 'Moss velvet', 'fabric', '#5E6B4E', 1.2, ph('velour_velvet'), 0.7),
   woolGrey: m('woolGrey', 'Felted grey wool', 'fabric', '#8C8A86', 1.05, ph('poly_wool_herringbone'), 0.9),
 

@@ -8,6 +8,7 @@
     "check:plans": "tsx scripts/check-plans.ts",
     "render:plans": "tsx scripts/render-plans.ts",
     "export:catalogue": "tsx scripts/export-catalogue.ts",
+    "build:moodboards": "tsx scripts/build-moodboards.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
