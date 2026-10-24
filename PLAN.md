@@ -115,8 +115,16 @@ and on a phone over the same Wi-Fi. It is not a buyer-facing product.
    - Undo, and the running total.
    - Also built: the catalogue with 3D thumbnails, search and swap-with-price-difference; the bill by
      room; lamp light at night; touch selection and action sheet; kitchen base and shower screen widths.
+   - Fixed while checking the previews: a hairline crack down every cushion; the main door lit as
+     the foyer recess outside it; the shoe cabinet standing at the recess's open edge (now just
+     inside the door); pendants at eye level (now 90 cm over the table); swapping lost in
+     development mode; the key hints running under the dock at 1440 px; the phone top bar
+     overflowing.
    - Known gaps: the B1 bay window still lets in no daylight; furniture can overlap if you put it
-     there (nothing stops it); frame rate with furniture is untested on the Arc 130V.
+     there (nothing stops it); room lights are all on or all off until Phase 3, so bathrooms are dim
+     by day; from the balcony end a 1 px line can show across the Brutalist leather sofa, along the
+     hidden skirting edge behind it (not ambient occlusion, sun, window light, bounce or
+     reflections; cause not found); frame rate with furniture is untested on the Arc 130V.
 3. **Light and views**:
    - Time-of-day and month sliders.
    - Per-room switches, dimmers and colour temperature.

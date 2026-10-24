@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { STYLE_ORDER, type StyleId } from './catalogue/styles';
 import { BLOCKER_LAYER, apertureTarget, debugApertureView, lightDebug } from './render/daylight';
+import { editView } from './render/EditController';
 import { activeCameraRef, controls } from './render/Player';
 import { registry } from './render/registry';
 import { useLayout } from './state/layout';
@@ -56,6 +57,7 @@ export function installDebugHook() {
       store: useStore,
       layout: useLayout,
       controls,
+      editView,
       registry,
       teleport(x: number, z: number, yawDeg = 0, pitchDeg?: number) {
         controls.teleport = { x, z, yaw: yawDeg * deg, pitch: pitchDeg === undefined ? undefined : pitchDeg * deg };

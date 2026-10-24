@@ -154,16 +154,16 @@ function PlanHints() {
       <span className="key">
         <kbd>Drag</kbd>Move a piece
       </span>
-      <span className="key">
+      <span className="key opt">
         <kbd>R</kbd>Rotate
       </span>
-      <span className="key">
+      <span className="key opt">
         <kbd>Wheel</kbd>Zoom
       </span>
       <span className="key">
         <kbd>Double-click</kbd>Walk there
       </span>
-      <span className="key">
+      <span className="key opt">
         <kbd>Tab</kbd>Walk
       </span>
     </div>
@@ -173,13 +173,13 @@ function PlanHints() {
 function KeyHints() {
   return (
     <div className="hints">
-      <span className="key">
+      <span className="key opt">
         <kbd>WASD</kbd>Move
       </span>
       <span className="key">
         <kbd>E</kbd>Pick up / door
       </span>
-      <span className="key">
+      <span className="key opt">
         <kbd>M</kbd>Measure
       </span>
       <span className="key">

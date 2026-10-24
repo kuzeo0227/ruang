@@ -7,12 +7,39 @@ local web page on your own computer.
 
 ## Status
 
-**Phase 1 (walkable Type A) is ready for you to walk through.** Type A is built from the plan data
-with real doors, windows and finishes, under a simulated Kuala Lumpur sun and sky, with a mountain
-view. All five interior styles can be switched (shell finishes only; furniture comes in Phase 2).
-The checkpoint for this phase is your judgement of **scale and realism** on your laptop.
+**Phase 2 (furniture) is ready for you to walk through.** Type A is now furnished in all five
+styles, 68 to 70 pieces each: sofas, beds, wardrobes, kitchen modules, bathroom fittings, lamps,
+curtains and plants, built in code at their catalogue sizes or taken from CC0 scans. Look at any
+piece to see its price, then pick it up, turn it, change its finish, swap it for another from the
+catalogue or hide it. The total in the top bar follows every change, and <kbd>Tab</kbd> shows the
+plan from above for rearranging. The checkpoint for this phase is your walk-through: whether the
+pieces feel the right size, each style reads as intended, the prices look plausible, and editing is
+easy on the laptop and the phone.
 
-Phase 1 screenshots (rendered in software here, so lower quality than on your laptop):
+Starting totals for Type A (estimates in MYR, furniture and fittings only, before renovation):
+
+| Muji | Japanese | Brutalist | Minimalist | Quiet Luxury |
+|---|---|---|---|---|
+| RM72,089 | RM94,118 | RM119,077 | RM63,707 | RM188,715 |
+
+The balcony faces north, so from late September to mid-March the sun never shines straight in, and
+daytime rooms look soft and even. From late March to September it does, low in the mornings and late
+afternoons: set the month on the Lighting panel.
+
+Phase 2 screenshots (rendered in software here, so softer and with simpler shadows than on your laptop):
+
+| | |
+|---|---|
+| Quiet Luxury | [Living room, June 4:30 pm](docs/previews/phase2-01-quiet-luxury-living.jpg) · [From the front door](docs/previews/phase2-02-quiet-luxury-entry.jpg) · [Evening, lamps on](docs/previews/phase2-03-quiet-luxury-night.jpg) · [Bedroom at night](docs/previews/phase2-04-quiet-luxury-bedroom-night.jpg) · [Bathroom, evening](docs/previews/phase2-05-quiet-luxury-bathroom.jpg) |
+| Other styles | [Muji living and dining](docs/previews/phase2-06-muji-living.jpg) · [Muji kitchen](docs/previews/phase2-07-muji-kitchen.jpg) · [Japanese living](docs/previews/phase2-08-japanese-living.jpg) · [Japanese bedroom](docs/previews/phase2-09-japanese-bedroom.jpg) · [Brutalist living](docs/previews/phase2-10-brutalist-living.jpg) · [Brutalist study](docs/previews/phase2-11-brutalist-study.jpg) · [Minimalist living](docs/previews/phase2-12-minimal-living.jpg) · [Minimalist bedroom](docs/previews/phase2-13-minimal-bedroom.jpg) |
+| Interface | [Price card](docs/previews/phase2-ui-hover.jpg) · [Swap, with price differences](docs/previews/phase2-ui-swap.jpg) · [Catalogue](docs/previews/phase2-ui-catalogue.jpg) · [Bill](docs/previews/phase2-ui-bill.jpg) · [Plan view](docs/previews/phase2-ui-plan.jpg) · [Phone](docs/previews/phase2-ui-phone.jpg) |
+
+Known gaps: furniture can overlap if you put it there (nothing stops it); room lights are all on or
+all off (per-room switches come in Phase 3), so bathrooms are dim by day; from the balcony end, a
+hairline can show across the black leather sofa (cause not found yet); the frame rate with furniture
+is untested on the Arc 130V.
+
+Phase 1 screenshots (the empty shell, before furniture):
 
 | | |
 |---|---|
@@ -28,7 +55,7 @@ Phase 0 design references, still current:
 | Interface mockup (desktop and phone) | `design/ui-mockup/index.html` | [walk + lighting](docs/previews/ui-1-desktop-walk-lighting.jpg) · [catalogue](docs/previews/ui-2-desktop-catalogue.jpg) · [phone](docs/previews/ui-3-phone.jpg) · [design language](docs/previews/ui-4-design-language.jpg) |
 | Style mood boards (5 styles + window views) | `design/moodboards/index.html` | [Muji](docs/previews/moodboard-muji.jpg) · [Japanese](docs/previews/moodboard-japanese.jpg) · [Brutalist](docs/previews/moodboard-brutalist.jpg) · [Minimalist](docs/previews/moodboard-minimal.jpg) · [Quiet Luxury](docs/previews/moodboard-quietLuxury.jpg) · [Views](docs/previews/moodboard-views.jpg) |
 | Floor plans rebuilt from the CAD sheets | `docs/plans/index.html` | [Type A](docs/previews/plan-type-a.jpg) · [Type B1](docs/previews/plan-type-b1.jpg) · [Type B](docs/previews/plan-type-b.jpg) |
-| Furniture catalogue (148 items) | `docs/catalogue.csv` (opens in Excel) | [catalogue.csv](docs/catalogue.csv) |
+| Furniture catalogue (149 items) | `docs/catalogue.csv` (opens in Excel) | [catalogue.csv](docs/catalogue.csv) |
 | How prices were set, with sources | `docs/pricing.md` | [pricing.md](docs/pricing.md) |
 
 The full plan, decisions and assumptions are in [PLAN.md](PLAN.md).
@@ -54,8 +81,8 @@ The full plan, decisions and assumptions are in [PLAN.md](PLAN.md).
 npm run dev
 ```
 
-Then open <http://localhost:5173> in Chrome or Edge. The first run downloads about 100 MB of CC0
-textures and a 3D model from Poly Haven and ambientCG into `public/assets/` (later runs skip this), so
+Then open <http://localhost:5173> in Chrome or Edge. The first run downloads about 250 MB of CC0
+textures and 3D models from Poly Haven and ambientCG into `public/assets/` (later runs skip this), so
 it needs an internet connection once.
 
 To try it on your phone, connect the phone to the same Wi-Fi, run `npm run dev -- --host`, and open the

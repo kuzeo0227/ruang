@@ -25,10 +25,11 @@ export function FurniturePanel() {
   const swapFor = useLayout((s) => s.swapFor);
   const total = useLayout((s) => totalOf(s.placements));
   const showing = swapFor ? 'catalogue' : tab;
-  // Closing the panel ends a swap.
+  // Closing the panel ends a swap. (React's development-mode rehearsal unmount leaves the panel
+  // open, and must not end it.)
   useEffect(
     () => () => {
-      useLayout.getState().set({ swapFor: null });
+      if (useStore.getState().panel !== 'furniture') useLayout.getState().set({ swapFor: null });
     },
     [],
   );

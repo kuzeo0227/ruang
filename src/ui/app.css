@@ -342,6 +342,10 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; 
 .touch-actions { position: absolute; right: var(--right); top: calc(50% + 40px); display: flex; flex-direction: column; gap: 10px; z-index: 3; }
 
 /* ---------- Narrow screens and phones ---------- */
+/* Below this the full hint bar would run under the dock (a 14-inch laptop at 200% is 1440 wide). */
+@media (max-width: 1600px) {
+  .hints .opt { display: none; }
+}
 @media (max-width: 1360px) {
   .hints { display: none; }
 }
@@ -375,7 +379,10 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; 
   .unlocked { display: none; }
 }
 @media (max-width: 480px) {
-  .topbar .unit-chip { display: none; }
+  /* Too narrow for every chip: the view is also in the dock, and the running total moves under
+     the right end of the bar. */
+  .topbar .unit-chip, .topbar .c-views { display: none; }
+  .topbar .c-price { position: absolute; top: calc(100% + 8px); right: 0; }
   .howto.keys { grid-template-columns: 1fr; }
 }
 @media (max-height: 520px) and (orientation: landscape) {
