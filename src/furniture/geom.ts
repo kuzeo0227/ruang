@@ -49,22 +49,26 @@ function clean(g: THREE.BufferGeometry): THREE.BufferGeometry {
 
 /** Superellipsoid filling a box: a soft cushion. Lower e means squarer. */
 function superellipsoid(a: number, b: number, c: number, e1: number, e2: number, segU = 28, segV = 16): THREE.BufferGeometry {
-  const sp = (x: number, e: number) => Math.sign(x) * Math.pow(Math.abs(x), e);
+  // Signed power. sin(π) and cos(π/2) come out around 1e-16, which a small exponent turns into
+  // about a millimetre, so they snap to zero; otherwise the cushion has a hairline crack down its middle.
+  const sp = (x: number, e: number) => (Math.abs(x) < 1e-9 ? 0 : Math.sign(x) * Math.pow(Math.abs(x), e));
   const pos: number[] = [];
   const idx: number[] = [];
   for (let i = 0; i <= segV; i++) {
     const v = -Math.PI / 2 + (Math.PI * i) / segV;
-    for (let j = 0; j <= segU; j++) {
+    for (let j = 0; j < segU; j++) {
       const u = -Math.PI + (2 * Math.PI * j) / segU;
       const cv = sp(Math.cos(v), e1);
       pos.push(a * cv * sp(Math.cos(u), e2), b * sp(Math.sin(v), e1), c * cv * sp(Math.sin(u), e2));
     }
   }
-  const row = segU + 1;
+  // Each ring wraps round to its first vertex, so the seam shares vertices and normals.
+  const row = segU;
   for (let i = 0; i < segV; i++) {
     for (let j = 0; j < segU; j++) {
       const p = i * row + j;
-      idx.push(p, p + row, p + 1, p + 1, p + row, p + row + 1);
+      const q = i * row + ((j + 1) % segU);
+      idx.push(p, p + row, q, q, p + row, q + row);
     }
   }
   const g = new THREE.BufferGeometry();

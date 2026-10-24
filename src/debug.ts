@@ -90,7 +90,6 @@ export function installDebugHook() {
         if (on) cam?.layers.enable(BLOCKER_LAYER);
         else cam?.layers.disable(BLOCKER_LAYER);
       },
-      /** True once textures are loaded and the reflection probes have settled. */
       /** What the daylight camera of an opening sees (luminance × 10⁴ on a 16 × 16 grid). */
       apertureView(id: string) {
         const gl = registry.gl;
@@ -118,12 +117,9 @@ export function installDebugHook() {
         const ndc = new THREE.Vector2((px / rect.width) * 2 - 1, -(py / rect.height) * 2 + 1);
         const ray = new THREE.Raycaster();
         ray.setFromCamera(ndc, cam);
-        const objs: THREE.Object3D[] = [];
-        cam.parent?.traverse(() => undefined);
         const scene = registry.furnitureRoot?.parent;
         if (!scene) return null;
         const hits = ray.intersectObject(scene, true).filter((h) => (h.object as THREE.Mesh).isMesh && h.object.visible);
-        void objs;
         return hits.slice(0, 3).map((h) => {
           let o: THREE.Object3D | null = h.object;
           let uid: string | undefined;
@@ -136,6 +132,7 @@ export function installDebugHook() {
           return { uid, item: p?.itemId, mat: m.name || m.type, d: +h.distance.toFixed(2), at: h.point.toArray().map((v) => +v.toFixed(2)) };
         });
       },
+      /** True once textures are loaded and the reflection probes have settled. */
       ready() {
         return useStore.getState().loading.done && registry.furnitureReady && !registry.probeBusy && !registry.flags.probes && !registry.flags.shadows && registry.zoneEnv.size > 0;
       },
