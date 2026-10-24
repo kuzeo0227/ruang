@@ -1,10 +1,11 @@
-import { ChevronDown, Maximize, Moon, Mountain, Settings, Sun } from 'lucide-react';
+import { ChevronDown, Maximize, Moon, Settings, Sun } from 'lucide-react';
 import { STYLES } from '../catalogue/styles';
 import { UNITS } from '../plan/units';
 import { sunPosition } from '../render/sun';
 import { useStore } from '../state/store';
 import { STYLE_SHORT, formatClock } from './common';
 import { TotalPill } from './EditHud';
+import { VIEWS } from './panels';
 
 export function TopBar() {
   const unit = useStore((s) => s.unit);
@@ -14,7 +15,10 @@ export function TopBar() {
   const panel = useStore((s) => s.panel);
   const showStats = useStore((s) => s.showStats);
   const togglePanel = useStore((s) => s.togglePanel);
+  const view = useStore((s) => s.view);
   const plan = UNITS[unit];
+  const current = VIEWS.find((v) => v.id === view) ?? VIEWS[0]!;
+  const ViewIcon = current.icon;
   const day = sunPosition(month, time).elevation > -1;
   const accent = STYLES[style].palette.find((p) => p.role === 'accent')?.hex ?? '#8b5cf6';
 
@@ -36,8 +40,8 @@ export function TopBar() {
           <ChevronDown className="ic chev" size={15} />
         </button>
         <button className={`chip glass c-views ${panel === 'views' ? 'open' : ''}`} onClick={() => togglePanel('views')} aria-label="Window view">
-          <Mountain className="ic" size={16} />
-          <span className="chip-label">Mountain</span>
+          <ViewIcon className="ic" size={16} />
+          <span className="chip-label">{current.name}</span>
         </button>
       </div>
       <div className="group">

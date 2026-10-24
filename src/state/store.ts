@@ -18,7 +18,7 @@ export interface RoomLight {
   kelvin: number;
 }
 export type Panel = null | 'unit' | 'style' | 'furniture' | 'lighting' | 'views' | 'settings';
-export type ViewId = 'mountain';
+export type ViewId = 'mountain' | 'rainforest' | 'beach' | 'city';
 
 export interface Measure {
   a: [number, number, number] | null;

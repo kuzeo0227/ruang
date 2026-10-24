@@ -1,6 +1,6 @@
 // URL parameters and a window hook, so the scene can be set up without a mouse (headless screenshots,
 // bookmarking a viewpoint while tuning). Example:
-//   /?autostart=1&x=4.2&z=3.1&yaw=180&pitch=-5&time=17.5&style=muji&hud=0
+//   /?autostart=1&x=4.2&z=3.1&yaw=180&pitch=-5&time=17.5&style=muji&view=city&lights=evening&hud=0
 
 import * as THREE from 'three';
 import { STYLE_ORDER, type StyleId } from './catalogue/styles';
@@ -28,6 +28,8 @@ export function applyUrlParams() {
   if (month !== null) patch.month = Math.min(12, Math.max(1, Math.round(month)));
   const style = p.get('style');
   if (style && (STYLE_ORDER as string[]).includes(style)) patch.style = style as StyleId;
+  const view = p.get('view');
+  if (view === 'mountain' || view === 'rainforest' || view === 'beach' || view === 'city') patch.view = view;
   const quality = p.get('quality');
   if (quality === 'low' || quality === 'medium' || quality === 'high') patch.quality = quality as Quality;
   const ev = num('ev');

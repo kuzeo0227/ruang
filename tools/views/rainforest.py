@@ -97,8 +97,9 @@ def terrain(x, y):
     e = edge_radius(b)
     vw = valley_weight(b)
     out = np.clip(r - e, 0, None)
-    # The valley: a steep drop beyond the garden, then a floor that climbs into far hills.
-    drop = -58 * smoothstep(0, 170, out) * vw
+    # The valley: a steep bank just beyond the garden (so the trees on it stand below the eye),
+    # then a floor that falls gently and climbs into far hills.
+    drop = -(42 * smoothstep(0, 30, out) + 22 * smoothstep(25, 260, out)) * vw
     climb = (1 - vw) * (out * 0.09 + 25 * smoothstep(60, 600, out))
     hills = 260 * smoothstep(900, 4000, r) * (0.55 + 0.45 * undulation(x, y, 2600))
     rough = 6 * undulation(x, y, 140) * smoothstep(0, 40, out)
@@ -199,7 +200,7 @@ def bark_material(name, base, light, dark, scale=1.0):
 
 BARK = bark_material('bark', C(0.32, 0.29, 0.24), C(0.5, 0.48, 0.42), C(0.12, 0.11, 0.08))
 BARK_DARK = bark_material('bark_dark', C(0.16, 0.13, 0.1), C(0.33, 0.33, 0.27), C(0.06, 0.05, 0.035))
-PALM_TRUNK = bark_material('palm_trunk', C(0.42, 0.4, 0.36), C(0.55, 0.53, 0.48), C(0.22, 0.2, 0.17), scale=3.0)
+PALM_TRUNK = bark_material('palm_trunk', C(0.26, 0.24, 0.21), C(0.34, 0.33, 0.3), C(0.13, 0.12, 0.1), scale=3.0)
 BAMBOO = kit.simple_mat('bamboo', C(0.22, 0.28, 0.06), rough=0.35, spec=0.6)
 
 
@@ -434,60 +435,60 @@ def buttresses(x, y, z, r0, h, r, tb):
         tb.f += [(v0, v0 + 6, v0 + 4, v0 + 2), (v0 + 1, v0 + 3, v0 + 5, v0 + 7), (v0, v0 + 1, v0 + 7, v0 + 6), (v0 + 6, v0 + 7, v0 + 5, v0 + 4)]
 
 
+# Archetypes: height, trunk radius, crown radius, clusters, where the crown starts (share of the
+# height), cluster flattening, leaf density, buttress chance.
+ARCHETYPES = {
+    'emergent': dict(h=(42, 56), r0=(0.55, 0.8), crown=(10, 14), clusters=(11, 16), base=(0.72, 0.8), squash=0.55, density=1.7, buttress=1.0),
+    'canopy': dict(h=(26, 38), r0=(0.3, 0.5), crown=(6, 9), clusters=(9, 14), base=(0.5, 0.62), squash=0.75, density=1.9, buttress=0.4),
+    'subcanopy': dict(h=(14, 24), r0=(0.16, 0.3), crown=(3.5, 6), clusters=(6, 10), base=(0.4, 0.55), squash=0.8, density=2.1, buttress=0.0),
+    'understorey': dict(h=(5, 12), r0=(0.07, 0.15), crown=(2.0, 3.5), clusters=(3, 6), base=(0.3, 0.5), squash=0.85, density=2.3, buttress=0.0),
+}
+
+
 def tree(x, y, kind, r):
     """One tree at ground position (x, y): trunk, branches and crown clusters by archetype."""
     z = float(terrain(x, y))
+    a = ARCHETYPES[kind]
     tone = r.uniform(0.1, 0.95)
+    H = r.uniform(*a['h'])
+    # Trees right at the top of the valley bank are young and short (it was cleared for the garden).
+    out = math.hypot(x, y) - float(edge_radius(bearing_of(x, y)))
+    H *= 1 - 0.45 * float(valley_weight(bearing_of(x, y))) * max(0.0, 1 - out / 30)
+    r0 = r.uniform(*a['r0'])
+    crown_r = r.uniform(*a['crown'])
+    clusters = int(r.integers(*a['clusters']))
+    base = H * r.uniform(*a['base'])
     if kind == 'emergent':
-        H = r.uniform(42, 56)
-        r0 = r.uniform(0.55, 0.8)
-        crown_r = r.uniform(9, 13)
-        clusters = r.integers(9, 14)
-        fork = H - r.uniform(9, 13)
-        kinds, density, tb = (BROAD if r.random() < 0.6 else FINE), 1.6, TUBES['bark']
-        buttresses(x, y, z, r0, r.uniform(2.5, 4.5), r, tb)
-        cz_range, squash = (H - 5, H - 1), 0.5
+        kinds, tb = (BROAD if r.random() < 0.6 else FINE), TUBES['bark']
     elif kind == 'canopy':
-        H = r.uniform(26, 38)
-        r0 = r.uniform(0.3, 0.5)
-        crown_r = r.uniform(5, 8)
-        clusters = r.integers(6, 10)
-        fork = H - r.uniform(8, 12)
         kinds = BROAD if r.random() < 0.55 else (FINE if r.random() < 0.7 else LARGE)
-        density, tb = 1.8, (TUBES['bark'] if r.random() < 0.6 else TUBES['bark_dark'])
-        if r.random() < 0.4:
-            buttresses(x, y, z, r0, r.uniform(1.2, 2.5), r, tb)
-        cz_range, squash = (H - 6, H - 1), 0.62
-    else:  # understorey
-        H = r.uniform(9, 19)
-        r0 = r.uniform(0.1, 0.22)
-        crown_r = r.uniform(2.5, 4.5)
-        clusters = r.integers(3, 6)
-        fork = H * r.uniform(0.45, 0.6)
+        tb = TUBES['bark'] if r.random() < 0.6 else TUBES['bark_dark']
+    else:
         kinds = LARGE if r.random() < 0.3 else (FINE if r.random() < 0.5 else BROAD)
-        density, tb = 2.0, TUBES['bark_dark']
-        cz_range, squash = (fork + 1.5, H - 1), 0.75
+        tb = TUBES['bark_dark']
+    if r.random() < a['buttress']:
+        buttresses(x, y, z, r0, r.uniform(1.5, 4.5) * r0 / 0.6, r, tb)
     lean = r.normal(0, 0.03, 2) * H
-    top = np.array([x + lean[0], y + lean[1], z + fork])
-    trunk = curve([x, y, z - 0.5], top, [r.normal(0, 0.4), r.normal(0, 0.4), 0], 7)
-    tb.tube(trunk, np.linspace(r0, r0 * 0.6, len(trunk)), sides=10 if kind != 'understorey' else 7)
+    top = np.array([x + lean[0], y + lean[1], z + base])
+    trunk = curve([x, y, z - 0.5], [top[0], top[1], z + H * 0.85], [r.normal(0, 0.4), r.normal(0, 0.4), 0], 8)
+    tb.tube(trunk, np.linspace(r0, r0 * 0.45, len(trunk)), sides=10 if r0 > 0.25 else 6)
     for c in range(clusters):
-        a = r.uniform(0, 2 * math.pi)
-        d = crown_r * math.sqrt(r.uniform(0.15, 1.0)) * (0.85 if kind == 'understorey' else 1.0)
-        cz = z + r.uniform(*cz_range)
-        cx, cy = top[0] + d * math.cos(a), top[1] + d * math.sin(a)
+        # Clusters fill the crown from its base to the top, widest a third of the way up.
+        t = r.uniform(0, 1) ** 0.8
+        cz = z + base + (H - base) * t
+        width = crown_r * (0.55 + 0.45 * math.sin(math.pi * min(1.0, 0.25 + t)))
+        ang = r.uniform(0, 2 * math.pi)
+        d = width * math.sqrt(r.uniform(0.05, 1.0))
+        cx, cy = top[0] + d * math.cos(ang), top[1] + d * math.sin(ang)
         size = crown_r * r.uniform(0.38, 0.55)
-        radii = (size * r.uniform(0.9, 1.15), size * r.uniform(0.9, 1.15), size * squash * r.uniform(0.85, 1.15))
-        # Branch from the trunk top to the cluster, rising then spreading.
-        start = top + np.array([0, 0, r.uniform(-2.5, 0.5)])
+        radii = (size * r.uniform(0.9, 1.15), size * r.uniform(0.9, 1.15), size * a['squash'] * r.uniform(0.85, 1.15))
+        # A branch from the trunk out to the cluster, rising as it goes.
+        start = np.array([top[0], top[1], min(cz - 1.0, z + base + (H - base) * t * 0.6)])
         end = np.array([cx, cy, cz - radii[2] * 0.4])
-        br = curve(start, end, [0, 0, r.uniform(0.5, 2.0)], 5)
-        tb.tube(br, np.linspace(r0 * 0.45, 0.06, len(br)), sides=6)
-        crown_cluster((cx, cy, cz), radii, density, kinds, tone, r)
+        br = curve(start, end, [0, 0, r.uniform(0.3, 1.5)], 5)
+        tb.tube(br, np.linspace(max(0.04, r0 * 0.4), 0.04, len(br)), sides=6 if r0 > 0.2 else 4)
+        crown_cluster((cx, cy, cz), radii, a['density'], kinds, tone, r)
         CORES.append(((cx, cy, cz), tuple(v * 0.72 for v in radii), tone))
-    if kind == 'understorey' and r.random() < 0.5:
-        # A second, lower tier of leaves along the trunk.
-        crown_cluster((top[0], top[1], z + fork * 0.75), (crown_r * 0.5,) * 2 + (crown_r * 0.3,), density, kinds, tone, r)
     return H
 
 
@@ -507,38 +508,61 @@ def jittered(spacing, rmax, jitter=0.4, rmin=0.0):
     return pts[(d < rmax) & (d >= rmin)]
 
 
-placed = []  # (x, y, radius) for spacing
-
-
-def far_enough(x, y, rad):
-    for px, py, pr in placed[-4000:]:
-        if (x - px) ** 2 + (y - py) ** 2 < (rad + pr) ** 2:
-            return False
-    return True
-
-
 def reach(x, y):
     """Detail range: further out along the valley, where the canopy is seen from above."""
     return DETAIL * (1 + 0.6 * float(valley_weight(bearing_of(x, y))))
 
 
-counts = {'emergent': 0, 'canopy': 0, 'understorey': 0}
-for kind, spacing, rad, keep in (('emergent', 34, 12, 0.6), ('canopy', 11, 4.5, 0.9), ('understorey', 6.5, 2.0, 0.7)):
+# Layers, tallest first: spacing within a layer, and how deep into the forest the layer still
+# shows (lower layers are hidden under the canopy further in, except down the valley slope).
+LAYERS = (('emergent', 30, 0.6, 1e9), ('canopy', 10, 0.95, 1e9), ('subcanopy', 7, 0.85, 45), ('understorey', 4.2, 0.85, 22))
+trunks = []  # every trunk so far, so no two stand in the same spot
+counts = {}
+for kind, spacing, keep, max_depth in LAYERS:
     pts = jittered(spacing, DETAIL * 1.6)
     rng.shuffle(pts)
+    mine = []
     for x, y in pts:
         if not in_forest(x, y, 1.5) or math.hypot(x, y) > reach(x, y) or rng.random() > keep:
             continue
-        # Understorey shows only near the edge; deeper in it is hidden under the canopy.
         depth = math.hypot(x, y) - float(edge_radius(bearing_of(x, y)))
-        if kind == 'understorey' and depth > 18:
+        if depth > max_depth * (1 + 2.5 * float(valley_weight(bearing_of(x, y)))):
             continue
-        if not far_enough(x, y, rad):
+        if any((x - px) ** 2 + (y - py) ** 2 < (spacing * 0.75) ** 2 for px, py in mine[-3000:]):
             continue
-        placed.append((x, y, rad))
+        if any((x - px) ** 2 + (y - py) ** 2 < 1.6**2 for px, py in trunks[-6000:]):
+            continue
+        mine.append((x, y))
+        trunks.append((x, y))
         tree(x, y, kind, np.random.default_rng(rng.integers(1 << 31)))
-        counts[kind] += 1
+    counts[kind] = len(mine)
 print('trees', counts, 'branchlets', len(LEAVES.pos))
+
+
+def curtain():
+    """Climbers and saplings along the edge: a ragged wall of leaves from the ground to the canopy."""
+    for b in np.arange(0, 360, 0.7):
+        e = float(edge_radius(b))
+        top = 9 + 9 * (0.5 + 0.5 * math.sin(math.radians(b) * 7 + 1.3)) + 5 * (0.5 + 0.5 * math.sin(math.radians(b) * 23))
+        top *= 1 - 0.85 * float(valley_weight(b))
+        for zz in np.arange(0.8, top, 0.85):
+            if math.sin(b * 0.9 + zz * 0.7) * math.cos(b * 0.37 - zz * 0.45) > 0.45:
+                continue  # gaps
+            bulge = 1.6 * math.sin(zz * 0.5 + b * 0.2)
+            for layer in range(2):
+                bb = b + rng.uniform(-0.35, 0.35)
+                rr = e + 2.2 + layer * 1.3 + bulge + rng.uniform(-0.5, 0.5)
+                x, y = kit.polar(bb, rr)
+                z = float(terrain(x, y)) + zz + rng.uniform(-0.3, 0.3)
+                out = np.array([-math.sin(math.radians(bb)), -math.cos(math.radians(bb)), rng.uniform(-0.6, 0.5)])
+                out += rng.normal(0, 0.45, 3)
+                eul = eulers_facing(out[None, :], rng, roll=0.9)[0]
+                s = rng.uniform(0.8, 1.2)
+                LEAVES.add((x, y, z), (s, s, s), eul, rng.choice(BROAD + LARGE + FINE), rng.uniform(0.3, 1.0))
+
+
+curtain()
+print('curtain done, branchlets', len(LEAVES.pos))
 
 # ---------------------------------------------------------------- the forest edge: bamboo, palms, ferns, bananas, shrubs
 
@@ -684,10 +708,11 @@ def garden_raster():
     # Lawn with mowing stripes and soft patches; bare earth and litter towards the forest.
     stripes = 0.5 + 0.5 * np.sin((X * 0.94 + Y * 0.34) * math.pi / 1.6)
     patch = 0.5 + 0.5 * undulation(X, Y, 9.0) * 0.6
-    grass = np.stack([0.20 + 0.04 * stripes + 0.05 * patch, 0.36 + 0.05 * stripes + 0.06 * patch, 0.11 + 0.02 * stripes], -1)
-    grain = rngl.normal(0, 0.02, (n, n, 1))
+    # Linear albedo: mown grass reflects about a tenth of green light.
+    grass = np.stack([0.045 + 0.012 * stripes + 0.015 * patch, 0.095 + 0.018 * stripes + 0.02 * patch, 0.028 + 0.006 * stripes], -1)
+    grain = rngl.normal(0, 0.006, (n, n, 1))
     img[:] = grass + grain
-    litter = np.stack([0.22 + 0.08 * patch, 0.17 + 0.05 * patch, 0.1 + 0.03 * patch], -1)
+    litter = np.stack([0.07 + 0.03 * patch, 0.05 + 0.02 * patch, 0.03 + 0.01 * patch], -1)
     w = smoothstep(-6, 0, r - e)[..., None]
     img = img * (1 - w) + litter * w
     # A path: a loop round the lawn and a spur to the pool, light pavers with joints.
@@ -695,7 +720,7 @@ def garden_raster():
     spur = (np.abs(X - 0.4 * Y) < 0.8) & (Y > 0) & (Y < 15)
     path = loop | spur
     joints = ((np.floor(X / 0.6) + np.floor(Y / 0.3)) % 2 == 0)
-    pav = np.where(joints[..., None], [0.62, 0.6, 0.56], [0.68, 0.66, 0.62]) + rngl.normal(0, 0.015, (n, n, 1))
+    pav = np.where(joints[..., None], [0.3, 0.29, 0.27], [0.36, 0.35, 0.33]) + rngl.normal(0, 0.01, (n, n, 1))
     img = np.where(path[..., None], pav, img)
     # Pool deck (timber) and coping.
     ca, sa = math.cos(POOL['ang']), math.sin(POOL['ang'])
@@ -703,13 +728,13 @@ def garden_raster():
     ly = -(X - POOL['cx']) * sa + (Y - POOL['cy']) * ca
     deck = (np.abs(lx) < POOL['w'] / 2 + 3.2) & (np.abs(ly) < POOL['d'] / 2 + 3.2)
     boards = 0.85 + 0.15 * ((np.floor(ly / 0.14) % 3) / 2)
-    wood = np.stack([0.42 * boards, 0.3 * boards, 0.2 * boards], -1) + rngl.normal(0, 0.02, (n, n, 1))
+    wood = np.stack([0.2 * boards, 0.12 * boards, 0.07 * boards], -1) + rngl.normal(0, 0.008, (n, n, 1))
     img = np.where(deck[..., None], wood, img)
     coping = (np.abs(lx) < POOL['w'] / 2 + 0.4) & (np.abs(ly) < POOL['d'] / 2 + 0.4)
-    img = np.where(coping[..., None], [0.78, 0.76, 0.72], img)
+    img = np.where(coping[..., None], [0.55, 0.53, 0.5], img)
     # Planting beds: dark mulch in a ring inside the edge.
     bed = (r > e - 6.5) & (r < e - 1.5) & ~path
-    img = np.where(bed[..., None], np.array([0.11, 0.08, 0.06]) + rngl.normal(0, 0.015, (n, n, 1)), img)
+    img = np.where(bed[..., None], np.array([0.035, 0.025, 0.018]) + rngl.normal(0, 0.004, (n, n, 1)), img)
     srgb = np.clip(img, 0, 1) ** (1 / 2.2)
     path_png = os.path.join(A['out'], 'garden.png')
     save_png(path_png, (srgb * 255 + 0.5).astype(np.uint8))
@@ -769,21 +794,29 @@ kit.mesh_object('garden', verts, faces, gm, smooth=True)
 outer = terrain_mesh('terrain', GARDEN * 0.97, 30000, 420, 720, HILL_CANOPY)
 
 # The lap pool: a tiled basin under a clear water surface.
-tile = kit.simple_mat('pool_tile', C(0.35, 0.62, 0.66), 0.3, spec=0.5)
+tile = kit.simple_mat('pool_tile', C(0.18, 0.42, 0.48), 0.3, spec=0.5)
 water_m, nt, out_n = kit.node_mat('water')
-gl = nt.nodes.new('ShaderNodeBsdfPrincipled')
-gl.inputs['Base Color'].default_value = (0.8, 0.95, 0.95, 1)
-gl.inputs['Transmission Weight'].default_value = 1.0
-gl.inputs['IOR'].default_value = 1.333
-gl.inputs['Roughness'].default_value = 0.03
+# Fresnel mix of a mirror and a clear see-through layer (no refraction, so sunlight reaches the
+# floor without caustics).
+fres = nt.nodes.new('ShaderNodeFresnel')
+fres.inputs['IOR'].default_value = 1.333
+clear = nt.nodes.new('ShaderNodeBsdfTransparent')
+clear.inputs['Color'].default_value = (0.82, 0.95, 0.95, 1)
+mirror = nt.nodes.new('ShaderNodeBsdfGlossy')
+mirror.inputs['Roughness'].default_value = 0.03
 wn = nt.nodes.new('ShaderNodeTexNoise')
 wn.inputs['Scale'].default_value = 1.6
 wn.inputs['Detail'].default_value = 4
 wb = nt.nodes.new('ShaderNodeBump')
-wb.inputs['Strength'].default_value = 0.08
+wb.inputs['Strength'].default_value = 0.06
 nt.links.new(wn.outputs['Fac'], wb.inputs['Height'])
-nt.links.new(wb.outputs['Normal'], gl.inputs['Normal'])
-nt.links.new(gl.outputs['BSDF'], out_n.inputs['Surface'])
+nt.links.new(wb.outputs['Normal'], mirror.inputs['Normal'])
+nt.links.new(wb.outputs['Normal'], fres.inputs['Normal'])
+mixw = nt.nodes.new('ShaderNodeMixShader')
+nt.links.new(fres.outputs['Fac'], mixw.inputs['Fac'])
+nt.links.new(clear.outputs['BSDF'], mixw.inputs[1])
+nt.links.new(mirror.outputs['BSDF'], mixw.inputs[2])
+nt.links.new(mixw.outputs['Shader'], out_n.inputs['Surface'])
 mb = kit.MeshBuilder()
 hw, hd = POOL['w'] / 2, POOL['d'] / 2
 corners = [(-hw, -hd), (hw, -hd), (hw, hd), (-hw, hd)]
@@ -829,9 +862,9 @@ def frangipani(x, y, r):
 
 
 for x, y in ((-14.0, 20.0), (26.0, 8.0), (-22.0, -6.0)):
-    frangipani(x, y, np.random.default_rng(int(x * 7 + y)))
+    frangipani(x, y, np.random.default_rng(abs(int(x * 7 + y * 131))))
 for x, y in ((3.0, 32.0), (22.0, 34.0), (-8.0, 28.0), (-30.0, 12.0), (30.0, -10.0)):
-    palm(x, y, np.random.default_rng(int(x * 13 + y)), garden=True)
+    palm(x, y, np.random.default_rng(abs(int(x * 13 + y * 157))), garden=True)
 
 # ---------------------------------------------------------------- far forest: crown shells
 

@@ -1,6 +1,6 @@
 // Side panels (bottom sheets on phones): unit, style, lighting, views and settings.
 
-import { Check, Copy, House, Lightbulb, Lock, Mountain, Palette, Power, Settings, Sun, Moon, SunMoon, Sunrise, Sunset, Tv, type LucideIcon } from 'lucide-react';
+import { Building2, Check, Copy, House, Lightbulb, Lock, Mountain, Palette, Power, Settings, Sun, Moon, SunMoon, Sunrise, Sunset, Trees, Tv, Waves, type LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Color } from 'three';
 import { MATERIALS } from '../catalogue/materials';
@@ -12,7 +12,7 @@ import { controls } from '../render/Player';
 import { registry } from '../render/registry';
 import { DUSK_ELEVATION, KELVINS, applyLightScene, lightRooms, roomLight, setRoomLight, toggleRooms, useLitRooms, type LitRoom } from '../render/roomLights';
 import { sunPosition, sunTimes } from '../render/sun';
-import { useStore, writeSetting, type LightScene, type Quality, type RoomLight } from '../state/store';
+import { useStore, writeSetting, type LightScene, type Quality, type RoomLight, type ViewId } from '../state/store';
 import { PanelFrame, Range, Seg, Switch, compassPoint, formatClock } from './common';
 import { FurniturePanel } from './FurniturePanel';
 
@@ -314,30 +314,32 @@ function LightingPanel() {
 
 // ---------------- Views ----------------
 
-const VIEWS = [
-  { id: 'mountain', name: 'Mountain', img: '/ui/views/mountain.jpg', note: 'Highland valley, ground floor' },
-  { id: 'rainforest', name: 'Rainforest', img: '/ui/views/rainforest.jpg', note: 'Level 5, canopy height', soon: 'Phase 3' },
-  { id: 'beach', name: 'Beach', img: '/ui/views/beach.jpg', note: 'Level 10, sea front', soon: 'Phase 3' },
-  { id: 'city', name: 'KL skyline', img: '/ui/views/city.jpg', note: 'Level 38, city centre', soon: 'Phase 3' },
+export const VIEWS: { id: ViewId; name: string; icon: LucideIcon; img: string; floor: string; note: string; soon?: string }[] = [
+  { id: 'mountain', name: 'Mountain', icon: Mountain, img: '/ui/views/mountain.jpg', floor: 'Ground floor', note: 'A highland valley seen from the ground floor.' },
+  { id: 'rainforest', name: 'Rainforest', icon: Trees, img: '/ui/views/rainforest.jpg', floor: 'Level 5', note: 'Level 5, about 15 m up: a garden clearing in lowland rainforest, a valley opening to the north-north-east.', soon: 'Soon' },
+  { id: 'beach', name: 'Beach', icon: Waves, img: '/ui/views/beach.jpg', floor: 'Level 10', note: 'Level 10, about 30 m up, on the sea front.', soon: 'Soon' },
+  { id: 'city', name: 'KL skyline', icon: Building2, img: '/ui/views/city.jpg', floor: 'Level 38', note: 'Level 38, about 115 m up, looking north over Kuala Lumpur to Merdeka 118, the Petronas Towers and the Titiwangsa range. Lights come on at dusk.' },
 ];
 
 function ViewsPanel() {
   const view = useStore((s) => s.view);
+  const set = useStore((s) => s.set);
+  const current = VIEWS.find((v) => v.id === view);
   return (
     <PanelFrame family="views" icon={Mountain} title="Window view">
       <div className="views">
         {VIEWS.map((v) => (
-          <div key={v.id} className={`view ${v.id === view ? 'on' : ''} ${v.soon ? 'locked' : ''}`}>
+          <button key={v.id} className={`view ${v.id === view ? 'on' : ''} ${v.soon ? 'locked' : ''}`} disabled={!!v.soon} aria-pressed={v.id === view} onClick={() => set({ view: v.id })}>
             <img src={v.img} alt="" draggable={false} />
             <span className="vname">
-              {v.soon ? <Lock className="ic" size={12} /> : <Check className="ic" size={12} />}
+              {v.soon ? <Lock className="ic" size={12} /> : v.id === view ? <Check className="ic" size={12} /> : <v.icon className="ic" size={12} />}
               {v.name}
             </span>
-            {v.soon && <span className="soon-tag">{v.soon}</span>}
-          </div>
+            {v.soon ? <span className="soon-tag">{v.soon}</span> : <span className="floor-tag">{v.floor}</span>}
+          </button>
         ))}
       </div>
-      <p className="note">{VIEWS.find((v) => v.id === view)?.note}. The landscape is re-lit for the time of day and the sky is simulated for Kuala Lumpur.</p>
+      <p className="note">{current?.note} The landscape is re-lit for the time of day and the sky is simulated for Kuala Lumpur.</p>
     </PanelFrame>
   );
 }

@@ -314,6 +314,10 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; 
 .view.on { border-color: var(--c-views); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-views) 40%, transparent); }
 .view.on .vname .ic { color: var(--c-views); }
 .view.locked img { filter: saturate(0.5) brightness(0.65); }
+button.view { padding: 0; text-align: left; cursor: pointer; transition: transform var(--fast) var(--spring), border-color var(--fast); }
+button.view:not(:disabled):hover { transform: translateY(-2px); }
+button.view:disabled { cursor: default; }
+.floor-tag { position: absolute; top: 8px; right: 8px; padding: 2px 8px; border-radius: var(--r-pill); font-size: 10px; font-weight: 700; background: rgba(10, 8, 18, 0.6); color: var(--text-2); }
 
 /* Diagnostics */
 .diag { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 12px; }
