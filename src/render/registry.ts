@@ -3,6 +3,25 @@
 import * as THREE from 'three';
 import type { ShellData, ZoneId } from '../shell/types';
 
+/** A placed piece of furniture in the scene. */
+export interface FurnitureEntry {
+  uid: string;
+  object: THREE.Object3D;
+  /** World bounds, so probes can leave out pieces right next to them. */
+  box: THREE.Box3;
+}
+
+/** A rotated box in plan the walker can't pass through. */
+export interface Obstacle {
+  x: number;
+  z: number;
+  /** Half width and half depth in the box's own frame. */
+  hw: number;
+  hd: number;
+  cos: number;
+  sin: number;
+}
+
 export const registry = {
   shell: null as ShellData | null,
   /** The renderer and the sun, for diagnostics. */
@@ -15,6 +34,20 @@ export const registry = {
   skyEnv: null as THREE.Texture | null,
   /** Meshes the crosshair can hit (shell surfaces, doors) for measuring. */
   hitTargets: new Set<THREE.Object3D>(),
+  /** The current layout's furniture is all loaded and in the scene. */
+  furnitureReady: false,
+  /** Looking down at the plan: probes and window shadows wait until walking again. */
+  planMode: false,
+  /** The plan camera while in plan mode (diagnostics). */
+  planCamera: null as THREE.Camera | null,
+  /** The group holding all the furniture. */
+  furnitureRoot: null as THREE.Object3D | null,
+  /** Placed furniture by placement uid. */
+  furniture: new Map<string, FurnitureEntry>(),
+  /** Furniture footprints for collision. */
+  obstacles: [] as Obstacle[],
+  /** Lamp shades and LEDs that glow when the lights are on, with their glow factor. */
+  glowMaterials: new Map<THREE.MeshStandardMaterial, number>(),
   /** Current (animated) openness of doors and sliders, 0..1. */
   doorOpen: new Map<string, number>(),
   /** Current sun state, written by the sun component. */
@@ -29,6 +62,8 @@ export const registry = {
   whiteBalance: { daylight: 1, night: new THREE.Color(1, 1, 1) },
   flags: {
     shadows: true,
+    /** Only the sun's shadow map (cheap): set every frame while something is being carried. */
+    sunShadow: false,
     probes: true,
     skyEnv: true,
   },
@@ -48,6 +83,23 @@ export function addZoneMaterial(zone: ZoneId, mat: THREE.MeshStandardMaterial) {
 
 export function removeZoneMaterial(zone: ZoneId, mat: THREE.MeshStandardMaterial) {
   registry.zoneMaterials.get(zone)?.delete(mat);
+}
+
+/**
+ * Hides furniture within `margin` of a point (a probe's position) and returns a function that shows
+ * it again: a piece right next to a probe would otherwise fill half of its view.
+ */
+export function hideFurnitureNear(p: THREE.Vector3, margin = 0.45): () => void {
+  const hidden: THREE.Object3D[] = [];
+  for (const f of registry.furniture.values()) {
+    if (f.object.visible && f.box.distanceToPoint(p) < margin) {
+      f.object.visible = false;
+      hidden.push(f.object);
+    }
+  }
+  return () => {
+    for (const o of hidden) o.visible = true;
+  };
 }
 
 /** Lighting changed: re-render shadows, and recapture probes (and the sky env if asked). */

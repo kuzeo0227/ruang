@@ -8,7 +8,8 @@ import * as THREE from 'three';
 import { floorHeightAt } from '../shell/build';
 import type { Rect, ShellData } from '../shell/types';
 import { useStore } from '../state/store';
-import { registry } from './registry';
+import { furnitureUse } from './EditController';
+import { registry, type Obstacle } from './registry';
 import { getShell } from './shellCache';
 
 const RADIUS = 0.25;
@@ -82,6 +83,39 @@ function resolve(pos: THREE.Vector3, rects: Rect[]) {
   }
 }
 
+/** Pushes the walker out of furniture footprints (boxes turned in plan). */
+function resolveObstacles(pos: THREE.Vector3, obstacles: Obstacle[]) {
+  for (const o of obstacles) {
+    // Into the box's frame: (x, z) -> (x cos - z sin, x sin + z cos) undoes its turn.
+    const dx = pos.x - o.x;
+    const dz = pos.z - o.z;
+    let lx = dx * o.cos - dz * o.sin;
+    let lz = dx * o.sin + dz * o.cos;
+    const cx = Math.max(-o.hw, Math.min(lx, o.hw));
+    const cz = Math.max(-o.hd, Math.min(lz, o.hd));
+    let ex = lx - cx;
+    let ez = lz - cz;
+    const d2 = ex * ex + ez * ez;
+    if (d2 >= RADIUS * RADIUS) continue;
+    if (d2 < 1e-10) {
+      const m = Math.min(o.hw - lx, lx + o.hw, o.hd - lz, lz + o.hd);
+      if (m === o.hw - lx) lx = o.hw + RADIUS;
+      else if (m === lx + o.hw) lx = -o.hw - RADIUS;
+      else if (m === o.hd - lz) lz = o.hd + RADIUS;
+      else lz = -o.hd - RADIUS;
+    } else {
+      const d = Math.sqrt(d2);
+      ex /= d;
+      ez /= d;
+      lx = cx + ex * RADIUS;
+      lz = cz + ez * RADIUS;
+    }
+    // Back to the world: (x, z) -> (x cos + z sin, -x sin + z cos).
+    pos.x = o.x + lx * o.cos + lz * o.sin;
+    pos.z = o.z - lx * o.sin + lz * o.cos;
+  }
+}
+
 export function Player() {
   const unit = useStore((s) => s.unit);
   const shell = useMemo(() => getShell(unit), [unit]);
@@ -102,9 +136,9 @@ export function Player() {
     const el = gl.domElement;
     const typing = (e: KeyboardEvent) => (e.target instanceof HTMLInputElement && e.target.type !== 'range') || e.target instanceof HTMLTextAreaElement;
     const down = (e: KeyboardEvent) => {
-      if (typing(e) || !useStore.getState().started) return;
+      if (typing(e) || !useStore.getState().started || useStore.getState().mode === 'plan') return;
       controls.keys.add(e.code);
-      if (e.code === 'KeyE') interact();
+      if (e.code === 'KeyE' && !furnitureUse()) interact();
       if (e.code === 'KeyM') measureAction();
       if (e.code === 'KeyL') {
         const s = useStore.getState();
@@ -130,7 +164,7 @@ export function Player() {
     // Drag to look without locking; a plain click locks the pointer (desktop).
     let drag: { x: number; y: number; moved: boolean; id: number } | null = null;
     const pdown = (e: PointerEvent) => {
-      if (!useStore.getState().started) return;
+      if (!useStore.getState().started || useStore.getState().mode === 'plan') return;
       if (e.pointerType === 'touch') return; // the touch UI handles look on phones
       drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
     };
@@ -177,6 +211,8 @@ export function Player() {
   useFrame((state, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
     const st = useStore.getState();
+    // Looking at the plan: the walker waits where they were (the plan camera is the default now).
+    if (st.mode === 'plan') return;
     const cam = camera as THREE.PerspectiveCamera;
     if (controls.teleport) {
       controls.position.set(controls.teleport.x, 0, controls.teleport.z);
@@ -218,6 +254,7 @@ export function Player() {
     const pos = controls.position;
     pos.x += vel.current.x * dt;
     pos.z += vel.current.y * dt;
+    resolveObstacles(pos, registry.obstacles);
     resolve(pos, shell.collision.concat(dynamicRects(shell)));
 
     const floor = floorHeightAt(shell.spaces, pos.x, pos.z) ?? 0;
@@ -297,7 +334,8 @@ export function crosshairHit(): THREE.Vector3 | null {
   if (!activeCamera) return null;
   ray.setFromCamera(centre, activeCamera);
   ray.far = 30;
-  const hits = ray.intersectObjects([...registry.hitTargets], true);
+  const furniture = [...registry.furniture.values()].map((f) => f.object);
+  const hits = ray.intersectObjects([...furniture, ...registry.hitTargets], true);
   return hits[0]?.point ?? null;
 }
 

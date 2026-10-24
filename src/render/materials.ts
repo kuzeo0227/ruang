@@ -17,11 +17,14 @@ import {
   MAX_APERTURES,
   apertureShadowMatrices,
   apertureShadowOrigins,
+  apertureFurnitureTexture,
   apertureShadowTexture,
   apertureTexture,
   downlightColor,
   lightDebug,
+  MAX_LAMPS,
   zoneDiffuseUniforms,
+  zoneLampUniforms,
   type ZoneLighting,
 } from './daylight';
 
@@ -42,6 +45,8 @@ export interface SurfaceSpec {
   envIntensity?: number;
   /** Paint and plaster get the fine plaster relief map. */
   paintDetail?: boolean;
+  /** Use only the texture's light and dark pattern, coloured by the catalogue swatch (for textures whose hue is off). */
+  luma?: boolean;
 }
 
 const FACADE = '#E6E1D8';
@@ -286,9 +291,20 @@ float rApNear(vec3 p, vec3 centre, float area) {
   return area / (PI * dot(d, d) + area);
 }
 uniform sampler2D rApShadow;
+uniform sampler2D rApFurn;
 uniform mat4 rApShadowMat[R_AP];
 uniform vec3 rApShadowO[R_AP];
-// How much of opening i's light reaches p: a variance shadow map lookup (soft, one read).
+// How much of opening i's light reaches p. Two variance shadow maps, both seen from the opening's
+// centre: the building's, read sharp, and the furniture's. A coarse read of the furniture map
+// estimates how far away whatever is in the way is; the penumbra a window that size casts grows with
+// the gap between that and p, so the final read uses a blurrier mip level where it should, and
+// furniture never hides more than part of the opening.
+float rChebyshev(vec2 m, float d) {
+  if (d <= m.x) return 1.0;
+  float variance = max(m.y - m.x * m.x, 0.00002);
+  float t = d - m.x;
+  return variance / (variance + t * t);
+}
 float rApVisible(int i, int row, vec3 p) {
   vec4 clip = rApShadowMat[i] * vec4(p, 1.0);
   if (clip.w <= 0.0) return 1.0;
@@ -296,14 +312,25 @@ float rApVisible(int i, int row, vec3 p) {
   if (abs(ndc.x) > 0.97 || abs(ndc.y) > 0.97) return 1.0;
   vec2 cell = vec2(float(row % AP_COLS), float(row / AP_COLS));
   vec2 uv = (cell + ndc * 0.5 + 0.5) / vec2(float(AP_COLS), float(AP_ROWS));
-  vec2 m = texture2D(rApShadow, uv).rg;
-  float d = length(p - rApShadowO[i]) / AP_RANGE - 0.004;
-  if (d <= m.x) return 1.0;
-  float variance = max(m.y - m.x * m.x, 0.00002);
-  float t = d - m.x;
-  float pmax = variance / (variance + t * t);
-  // Trim the light that variance maps let through behind thin occluders and at door openings.
-  return smoothstep(0.5, 1.0, pmax);
+  float dm = length(p - rApShadowO[i]);
+  float d = dm / AP_RANGE - 0.004;
+  // Trim the light that variance maps let through behind thin walls and at door openings.
+  float walls = smoothstep(0.5, 1.0, rChebyshev(textureLod(rApShadow, uv, 0.0).rg, d));
+  if (walls <= 0.0) return 0.0;
+  vec2 mc = textureLod(rApFurn, uv, 3.0).rg;
+  if (d <= mc.x && d <= textureLod(rApFurn, uv, 0.0).r) return walls;
+  float lod = 0.0;
+  float pc = rChebyshev(mc, d);
+  if (pc < 1.0) {
+    // Mean depth of the furniture in the way, taking the unblocked share to be at the receiver.
+    float zb = clamp((mc.x - pc * d) / max(1.0 - pc, 1e-3), 0.002, d);
+    float size = sqrt(length(rApU[i]) * length(rApV[i]));
+    float penumbra = size * (d - zb) / zb;
+    // One shadow texel spans 2 tan(70°) / 128 radians.
+    lod = clamp(log2(max(penumbra / (dm * 0.0429), 1.0)) - 0.5, 0.0, 5.0);
+  }
+  float furniture = smoothstep(0.15, 1.0, rChebyshev(textureLod(rApFurn, uv, lod).rg, d));
+  return walls * (1.0 - 0.8 * (1.0 - furniture));
 }
 #endif
 // Bounce light is captured at one point per zone; this scales it by how much more or less of the
@@ -312,6 +339,10 @@ float rBounce = 1.0;
 #if R_DL > 0
 uniform vec3 rDownPos[R_DL];
 uniform vec3 rDownColor;
+#endif
+#if R_LAMP > 0
+uniform vec4 rLampPos[R_LAMP];
+uniform vec3 rLampColor[R_LAMP];
 #endif
 #if R_ENVDIFF == 1
 uniform sampler2D rEnvDiffuse;
@@ -420,6 +451,22 @@ if (rDownColor.r + rDownColor.g + rDownColor.b > 0.0) {
     RE_Direct(dl, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight);
   }
 }
+#endif
+#if R_LAMP > 0
+// Lamps in the zone: point lights, optionally aimed down (pendants, desk lamps); no shadows.
+for (int i = 0; i < R_LAMP; i++) {
+  vec3 lc = rLampColor[i];
+  if (lc.r + lc.g + lc.b <= 0.0) continue;
+  vec3 toL = rLampPos[i].xyz - vRWorld;
+  float d2 = max(dot(toL, toL), 0.04);
+  float below = toL.y * inversesqrt(d2);
+  float beam = mix(1.0, 1.6 * smoothstep(-0.25, 0.6, below), rLampPos[i].w);
+  IncidentLight ll;
+  ll.direction = normalize((viewMatrix * vec4(toL, 0.0)).xyz);
+  ll.color = lc * beam / d2 * rDbg.z;
+  ll.visible = true;
+  RE_Direct(ll, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight);
+}
 #endif`;
 
 interface PatchOptions {
@@ -427,8 +474,10 @@ interface PatchOptions {
   rotate: boolean;
   box: boolean;
   roughMap: boolean;
+  luma?: boolean;
   apertures: number;
   downlights: number;
+  lamps: number;
   envDiffuse: boolean;
 }
 
@@ -454,8 +503,10 @@ function patch(mat: THREE.MeshStandardMaterial, o: PatchOptions, uniforms: Patch
       R_ROTATE: o.rotate ? 1 : 0,
       R_BOX: o.box ? 1 : 0,
       R_ROUGHMAP: o.roughMap ? 1 : 0,
+      R_LUMA: o.luma ? 1 : 0,
       R_AP: o.apertures,
       R_DL: o.downlights,
+      R_LAMP: o.lamps,
       R_ENVDIFF: o.envDiffuse ? 1 : 0,
       // An empty shell has no furniture to soak up light; this stands in for it.
       BOUNCE_GAIN: '0.85',
@@ -472,7 +523,16 @@ function patch(mat: THREE.MeshStandardMaterial, o: PatchOptions, uniforms: Patch
       .replace('void main() {', 'void main() {\n\trLayout();')
       .replace('#include <lights_fragment_begin>', `#include <lights_fragment_begin>\n${DOWNLIGHTS}`)
       .replace('#include <lights_fragment_maps>', `${WINDOW_LIGHT}\n#include <lights_fragment_maps>`)
-      .replace('#include <map_fragment>', '#include <map_fragment>\n\tdiffuseColor.rgb *= rShade;\n\tdiffuseColor.rgb = mix(diffuseColor.rgb, rGroutColor, rGroutMask);')
+      .replace(
+        '#include <map_fragment>',
+        THREE.ShaderChunk.map_fragment.replace(
+          'diffuseColor *= sampledDiffuseColor;',
+          `#if R_LUMA == 1
+		sampledDiffuseColor.rgb = vec3(dot(sampledDiffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722)));
+	#endif
+	diffuseColor *= sampledDiffuseColor;`,
+        ) + '\n\tdiffuseColor.rgb *= rShade;\n\tdiffuseColor.rgb = mix(diffuseColor.rgb, rGroutColor, rGroutMask);',
+      )
       .replace(
         '#include <roughnessmap_fragment>',
         `#include <roughnessmap_fragment>
@@ -482,7 +542,7 @@ function patch(mat: THREE.MeshStandardMaterial, o: PatchOptions, uniforms: Patch
 	roughnessFactor = mix(roughnessFactor, 0.95, rGroutMask);`,
       );
   };
-  mat.customProgramCacheKey = () => `ruang-${o.layout}-${+o.rotate}-${+o.box}-${+o.roughMap}-${o.apertures}-${o.downlights}-${+o.envDiffuse}`;
+  mat.customProgramCacheKey = () => `ruang-${o.layout}-${+o.rotate}-${+o.box}-${+o.roughMap}-${+!!o.luma}-${o.apertures}-${o.downlights}-${o.lamps}-${+o.envDiffuse}`;
 }
 
 // ---------------- Material creation ----------------
@@ -541,7 +601,10 @@ export async function createSurfaceMaterial(spec: SurfaceSpec, zone: Zone | null
       // Tint so the average colour matches the catalogue swatch (same as the mood boards).
       const target = linear(def.swatch);
       const m = t.mean;
-      mat.color.setRGB(clampTint(target.r / Math.max(m.r, 1e-3)), clampTint(target.g / Math.max(m.g, 1e-3)), clampTint(target.b / Math.max(m.b, 1e-3)));
+      if (spec.luma) {
+        const l = Math.max(0.2126 * m.r + 0.7152 * m.g + 0.0722 * m.b, 1e-3);
+        mat.color.setRGB(target.r / l, target.g / l, target.b / l);
+      } else mat.color.setRGB(clampTint(target.r / Math.max(m.r, 1e-3)), clampTint(target.g / Math.max(m.g, 1e-3)), clampTint(target.b / Math.max(m.b, 1e-3)));
     }
   } else {
     mat.roughness = targetRough;
@@ -560,6 +623,17 @@ export async function createSurfaceMaterial(spec: SurfaceSpec, zone: Zone | null
     rProbePos: { value: new THREE.Vector3(...(zone?.probe ?? [0, 0, 0])) },
     rDbg: lightDebug,
   };
+  const counts = addZoneUniforms(uniforms, zone, lighting);
+  patch(
+    mat,
+    { layout: LAYOUT_CODE[spec.layout], rotate: !!spec.rotate, box: !!zone, roughMap: !!mat.roughnessMap, luma: !!spec.luma && !!mat.map, ...counts },
+    uniforms,
+  );
+  return { material: mat, uniforms };
+}
+
+/** Adds the zone's daylight, bounce, downlight and lamp uniforms; returns what the shader should compile for. */
+function addZoneUniforms(uniforms: PatchUniforms, zone: Zone | null, lighting: ZoneLighting | null) {
   const aps = (lighting?.apertures ?? [])
     .slice()
     .sort((a, b) => area(b.aperture) - area(a.aperture))
@@ -573,6 +647,7 @@ export async function createSurfaceMaterial(spec: SurfaceSpec, zone: Zone | null
     uniforms.rApN = { value: aps.map((a) => new THREE.Vector3(...a.aperture.normal)) };
     uniforms.rApRow = { value: aps.map((a) => a.row) };
     uniforms.rApShadow = apertureShadowTexture;
+    uniforms.rApFurn = apertureFurnitureTexture;
     uniforms.rApShadowMat = { value: aps.map((a) => apertureShadowMatrices[a.row]!) };
     uniforms.rApShadowO = { value: aps.map((a) => apertureShadowOrigins[a.row]!) };
     uniforms.rProbeS = { value: Math.max(1e-4, aps.reduce((n, a) => n + openingNear(zone?.probe ?? [0, 1.45, 0], a.aperture), 0)) };
@@ -584,12 +659,35 @@ export async function createSurfaceMaterial(spec: SurfaceSpec, zone: Zone | null
     uniforms.rDownPos = { value: dls.map((p) => new THREE.Vector3(...p)) };
     uniforms.rDownColor = downlightColor;
   }
-  patch(
-    mat,
-    { layout: LAYOUT_CODE[spec.layout], rotate: !!spec.rotate, box: !!zone, roughMap: !!mat.roughnessMap, apertures: aps.length, downlights: dls.length, envDiffuse: aps.length > 0 },
-    uniforms,
-  );
-  return { material: mat, uniforms };
+  const lamps = lighting ? MAX_LAMPS : 0;
+  if (lamps) {
+    const l = zoneLampUniforms(lighting!.zone);
+    uniforms.rLampPos = l.pos;
+    uniforms.rLampColor = l.color;
+  }
+  return { apertures: aps.length, downlights: dls.length, lamps, envDiffuse: aps.length > 0 };
+}
+
+/**
+ * Gives a scanned model's own material (its maps and colours) the zone's lighting, like the shell.
+ * The material should be a clone made for this zone.
+ */
+export function patchModelMaterial(mat: THREE.MeshStandardMaterial, zone: Zone | null, lighting: ZoneLighting | null) {
+  const uniforms: PatchUniforms = {
+    rTexSize: { value: new THREE.Vector2(1, 1) },
+    rTile: { value: new THREE.Vector2(1, 1) },
+    rGrout: { value: 0 },
+    rGroutColor: { value: new THREE.Color(0.5, 0.5, 0.5) },
+    rVariation: { value: 0 },
+    rRough: { value: new THREE.Vector3(0.5, 0.5, 1) },
+    rBoxMin: { value: new THREE.Vector3(...(zone?.boxMin ?? [0, 0, 0])) },
+    rBoxMax: { value: new THREE.Vector3(...(zone?.boxMax ?? [1, 1, 1])) },
+    rProbePos: { value: new THREE.Vector3(...(zone?.probe ?? [0, 0, 0])) },
+    rDbg: lightDebug,
+  };
+  const counts = addZoneUniforms(uniforms, zone, lighting);
+  patch(mat, { layout: 0, rotate: false, box: !!zone, roughMap: false, ...counts }, uniforms);
+  return uniforms;
 }
 
 const clampTint = (v: number) => Math.min(2.5, Math.max(0.2, v));

@@ -4,10 +4,13 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useStore } from '../state/store';
+import { EditController } from './EditController';
 import { Effects } from './Effects';
+import { FurnitureView } from './FurnitureView';
 import { Lighting } from './Lighting';
 import { setMaxAnisotropy } from './materials';
 import { MeasureView } from './MeasureView';
+import { PlanView } from './PlanView';
 import { Player, setActiveCamera } from './Player';
 import { QUALITY, dprFor } from './quality';
 import { registry } from './registry';
@@ -47,6 +50,9 @@ export function Viewer() {
       <Suspense fallback={null}>
         <ShellView />
       </Suspense>
+      <FurnitureView />
+      <EditController />
+      <PlanView />
       <Player />
       <MeasureView />
       <Effects />

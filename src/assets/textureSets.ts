@@ -1,6 +1,7 @@
 // Which CC0 texture sets the app needs, shared by scripts/fetch-assets.ts (download)
 // and the renderer (loading). Derived from the style packs so a new style needs no edits here.
 
+import { CATALOGUE } from '../catalogue/items';
 import { MATERIALS, type MaterialId } from '../catalogue/materials';
 import { STYLES, STYLE_ORDER } from '../catalogue/styles';
 
@@ -16,8 +17,11 @@ export interface TextureSetSpec {
 /** Fine plaster/paint relief used on every painted wall and ceiling so paint never looks like flat CG. */
 export const PAINT_DETAIL: TextureSetSpec = { id: 'PaintedPlaster017', source: 'ambientcg', res: '1k' };
 
-/** Poly Haven models the app loads (glTF, 1k textures). */
-export const MODELS = ['exterior_aircon_unit'] as const;
+/** Poly Haven models the app loads (glTF, 1k textures): the AC condensers and every scanned catalogue piece. */
+export const MODELS: string[] = [
+  'exterior_aircon_unit',
+  ...new Set(CATALOGUE.flatMap((i) => (i.model.kind === 'polyhaven' ? [i.model.id] : []))),
+];
 
 /** Materials that some style uses as a floor get 2K maps; everything else 1K. */
 export function shellTextureSets(): TextureSetSpec[] {
@@ -38,6 +42,16 @@ export function shellTextureSets(): TextureSetSpec[] {
     sets.set(tex.id, { id: tex.id, source: tex.source, res });
   }
   sets.set(PAINT_DETAIL.id, PAINT_DETAIL);
+  return [...sets.values()].sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** Every texture set: the shell's (floors at 2K) plus every textured finish in the library at 1K. */
+export function allTextureSets(): TextureSetSpec[] {
+  const sets = new Map(shellTextureSets().map((s) => [s.id, s]));
+  for (const def of Object.values(MATERIALS)) {
+    const tex: { source: 'polyhaven' | 'ambientcg'; id: string } | undefined = def.texture;
+    if (tex && !sets.has(tex.id)) sets.set(tex.id, { id: tex.id, source: tex.source, res: '1k' });
+  }
   return [...sets.values()].sort((a, b) => a.id.localeCompare(b.id));
 }
 

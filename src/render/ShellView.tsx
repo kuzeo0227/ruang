@@ -8,10 +8,10 @@ import * as THREE from 'three';
 import { STYLES } from '../catalogue/styles';
 import type { Role, ShellData, SlidingPanel, SwingDoor, ZoneId } from '../shell/types';
 import { useStore } from '../state/store';
-import type { ZoneLighting } from './daylight';
 import { createSurfaceMaterial, surfaceSpec, texturesForStyle, loadTextureSet, type ShellMaterial } from './materials';
+import { ensureBvh } from './bvh';
 import { addZoneMaterial, invalidateLighting, registry, removeZoneMaterial } from './registry';
-import { getShell } from './shellCache';
+import { getShell, zoneLighting } from './shellCache';
 
 type MatMap = Map<string, ShellMaterial>;
 const key = (zone: ZoneId, role: Role) => `${zone}|${role}`;
@@ -44,14 +44,6 @@ export function ShellView() {
         ),
       );
       const zones = new Map(shell.zones.map((z) => [z.id, z]));
-      const lightingFor = (zone: ZoneId): ZoneLighting | null =>
-        zone === 'exterior'
-          ? null
-          : {
-              zone,
-              apertures: shell.apertures.map((aperture, row) => ({ aperture, row })).filter((a) => a.aperture.zone === zone),
-              downlights: shell.downlights.filter((d) => d.zone === zone).map((d) => d.position),
-            };
       const wanted = new Set<string>();
       for (const b of shell.batches) wanted.add(key(b.zone, b.role));
       for (const d of [...shell.doors, ...shell.sliders]) for (const p of d.pieces) wanted.add(key(d.zone, p.role));
@@ -59,7 +51,7 @@ export function ShellView() {
       await Promise.all(
         [...wanted].map(async (k) => {
           const [zone, role] = k.split('|') as [ZoneId, Role];
-          next.set(k, await createSurfaceMaterial(surfaceSpec(role, style), zones.get(zone) ?? null, lightingFor(zone)));
+          next.set(k, await createSurfaceMaterial(surfaceSpec(role, style), zones.get(zone) ?? null, zoneLighting(shell, zone)));
         }),
       );
       if (cancelled) {
@@ -111,16 +103,20 @@ export function ShellView() {
 
 function ShellMesh({ geometry, material, role }: { geometry: THREE.BufferGeometry; material: THREE.Material; role: Role }) {
   const ref = useRef<THREE.Mesh>(null);
+  // Ceilings and the slab above come off in plan mode.
+  const plan = useStore((s) => s.mode === 'plan');
   useEffect(() => {
     const mesh = ref.current;
     if (!mesh || role === 'glass') return;
+    ensureBvh(mesh.geometry);
     registry.hitTargets.add(mesh);
     return () => {
       registry.hitTargets.delete(mesh);
     };
   }, [role]);
   const glass = role === 'glass';
-  return <mesh ref={ref} geometry={geometry} material={material} castShadow={!glass} receiveShadow={!glass} renderOrder={glass ? 2 : 0} />;
+  const visible = !(plan && (role === 'ceiling' || role === 'slab'));
+  return <mesh ref={ref} geometry={geometry} material={material} castShadow={!glass} receiveShadow={!glass} renderOrder={glass ? 2 : 0} visible={visible} />;
 }
 
 const DOOR_SPEED = 1.4;

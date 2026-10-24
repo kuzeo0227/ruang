@@ -6,7 +6,7 @@ import type { UnitTypeId } from '../plan/types';
 
 export type Quality = 'low' | 'medium' | 'high';
 export type LightsMode = 'auto' | 'on' | 'off';
-export type Panel = null | 'unit' | 'style' | 'lighting' | 'views' | 'settings';
+export type Panel = null | 'unit' | 'style' | 'furniture' | 'lighting' | 'views' | 'settings';
 export type ViewId = 'mountain';
 
 export interface Measure {
@@ -44,7 +44,11 @@ const num = (key: string, fallback: number) => {
   return Number.isFinite(v) && readSetting(key) !== null ? v : fallback;
 };
 
+export type ViewMode = 'walk' | 'plan';
+
 export interface State {
+  /** Walking through the unit, or looking down at the plan. */
+  mode: ViewMode;
   unit: UnitTypeId;
   style: StyleId;
   view: ViewId;
@@ -74,6 +78,10 @@ export interface State {
   hint: string | null;
   /** Hide the interface (for clean screenshots). */
   hudHidden: boolean;
+  /** Which side of the furniture panel is showing. */
+  furnitureTab: 'catalogue' | 'bill';
+  /** A short message at the bottom of the view, with an Undo button for edits. */
+  toast: { id: number; text: string; undo?: boolean } | null;
   /** Player position for the minimap (updated a few times a second). */
   player: { x: number; z: number; yaw: number; room: string };
   stats: { fps: number; gpu: string; dpr: number; width: number; height: number };
@@ -84,6 +92,7 @@ export interface State {
 }
 
 export const useStore = create<State>((set, get) => ({
+  mode: 'walk',
   unit: 'A',
   style: 'quietLuxury',
   view: 'mountain',
@@ -108,6 +117,8 @@ export const useStore = create<State>((set, get) => ({
   measure: { a: null, b: null },
   hint: null,
   hudHidden: false,
+  furnitureTab: 'catalogue',
+  toast: null,
   player: { x: 0, z: 0, yaw: 0, room: '' },
   stats: { fps: 0, gpu: '', dpr: 1, width: 0, height: 0 },
 
@@ -117,3 +128,15 @@ export const useStore = create<State>((set, get) => ({
 }));
 
 export const deviceInfo = { isTouch, isPhone };
+
+let toastId = 0;
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+/** Show a toast for a few seconds. */
+export function showToast(text: string, undo = false) {
+  const id = ++toastId;
+  useStore.getState().set({ toast: { id, text, undo } });
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    if (useStore.getState().toast?.id === id) useStore.getState().set({ toast: null });
+  }, 4500);
+}

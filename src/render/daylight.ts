@@ -139,7 +139,21 @@ const atlasOptions = {
 } as const;
 const atlasW = AP_SHADOW_SIZE * AP_ATLAS_COLS;
 const atlasH = AP_SHADOW_SIZE * AP_ATLAS_ROWS;
-export const apertureShadowTarget = new THREE.WebGLRenderTarget(atlasW, atlasH, atlasOptions);
+/** Layer furniture meshes are also on, so the furniture can be drawn into its own shadow atlas. */
+export const FURNITURE_LAYER = 3;
+/** The blurred moments of the walls, doors and joinery (crisp: they stop light passing between rooms). */
+export const apertureShadowTarget = new THREE.WebGLRenderTarget(atlasW, atlasH, { ...atlasOptions, depthBuffer: false });
+/**
+ * The furniture's, kept apart and mipmapped: furniture only ever hides part of a large opening, and
+ * the shaders widen the blur where its penumbra should be wide.
+ */
+export const apertureFurnitureTarget = new THREE.WebGLRenderTarget(atlasW, atlasH, {
+  ...atlasOptions,
+  depthBuffer: false,
+  generateMipmaps: true,
+  minFilter: THREE.LinearMipmapLinearFilter,
+});
+const rawTarget = new THREE.WebGLRenderTarget(atlasW, atlasH, atlasOptions);
 const blurTarget = new THREE.WebGLRenderTarget(atlasW, atlasH, { ...atlasOptions, depthBuffer: false });
 /** View-projection of each opening's shadow camera, and the camera's position (shared with the shaders). */
 export const apertureShadowMatrices = Array.from({ length: MAX_APERTURES }, () => new THREE.Matrix4());
@@ -194,9 +208,14 @@ const blurScene = new THREE.Scene();
 const blurQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), blurMaterial);
 blurQuad.frustumCulled = false;
 blurScene.add(blurQuad);
+// Its own camera: the shadow camera's layers change between the building and furniture passes.
+const blurCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-/** Renders what each opening can see of the room, for window-light shadows. */
-export function renderApertureShadows(gl: THREE.WebGLRenderer, scene: THREE.Scene, apertures: Aperture[]) {
+/**
+ * Renders what each opening can see of the room, for window-light shadows: once for the building
+ * (with the furniture hidden) and once for the furniture alone.
+ */
+export function renderApertureShadows(gl: THREE.WebGLRenderer, scene: THREE.Scene, apertures: Aperture[], furniture: THREE.Object3D | null) {
   const prevTarget = gl.getRenderTarget();
   const prevOverride = scene.overrideMaterial;
   const prevClear = gl.getClearColor(new THREE.Color());
@@ -204,7 +223,21 @@ export function renderApertureShadows(gl: THREE.WebGLRenderer, scene: THREE.Scen
   scene.overrideMaterial = momentsMaterial;
   // Cleared to the far range: nothing in the way.
   gl.setClearColor(new THREE.Color(1, 1, 0), 1);
-  gl.setRenderTarget(apertureShadowTarget);
+  const wasVisible = furniture?.visible ?? false;
+  if (furniture) furniture.visible = false;
+  shadowCam.layers.set(0);
+  renderCells(gl, scene, apertures, apertureShadowTarget, false);
+  if (furniture) furniture.visible = wasVisible;
+  shadowCam.layers.set(FURNITURE_LAYER);
+  renderCells(gl, scene, apertures, apertureFurnitureTarget, true);
+  shadowCam.layers.set(0);
+  scene.overrideMaterial = prevOverride;
+  gl.setClearColor(prevClear, prevAlpha);
+  gl.setRenderTarget(prevTarget);
+}
+
+function renderCells(gl: THREE.WebGLRenderer, scene: THREE.Scene, apertures: Aperture[], out: THREE.WebGLRenderTarget, furniturePass: boolean) {
+  gl.setRenderTarget(rawTarget);
   gl.clear();
   const c = new THREE.Vector3();
   const n = new THREE.Vector3();
@@ -219,31 +252,30 @@ export function renderApertureShadows(gl: THREE.WebGLRenderer, scene: THREE.Scen
     shadowCam.up.set(0, 1, 0);
     shadowCam.lookAt(c.x + n.x, c.y + n.y, c.z + n.z);
     shadowCam.updateMatrixWorld();
-    apertureShadowMatrices[i]!.multiplyMatrices(shadowCam.projectionMatrix, shadowCam.matrixWorldInverse);
-    apertureShadowOrigins[i]!.copy(c);
+    if (!furniturePass) {
+      apertureShadowMatrices[i]!.multiplyMatrices(shadowCam.projectionMatrix, shadowCam.matrixWorldInverse);
+      apertureShadowOrigins[i]!.copy(c);
+    }
     (momentsMaterial.uniforms.origin!.value as THREE.Vector3).copy(c);
     const x = (i % AP_ATLAS_COLS) * AP_SHADOW_SIZE;
     const y = Math.floor(i / AP_ATLAS_COLS) * AP_SHADOW_SIZE;
-    apertureShadowTarget.viewport.set(x, y, AP_SHADOW_SIZE, AP_SHADOW_SIZE);
-    apertureShadowTarget.scissor.set(x, y, AP_SHADOW_SIZE, AP_SHADOW_SIZE);
-    apertureShadowTarget.scissorTest = true;
-    gl.setRenderTarget(apertureShadowTarget);
+    rawTarget.viewport.set(x, y, AP_SHADOW_SIZE, AP_SHADOW_SIZE);
+    rawTarget.scissor.set(x, y, AP_SHADOW_SIZE, AP_SHADOW_SIZE);
+    rawTarget.scissorTest = true;
+    gl.setRenderTarget(rawTarget);
     gl.render(scene, shadowCam);
   }
-  apertureShadowTarget.scissorTest = false;
-  apertureShadowTarget.viewport.set(0, 0, atlasW, atlasH);
-  scene.overrideMaterial = prevOverride;
-  // Blur horizontally into the spare target, then vertically back.
-  blurMaterial.uniforms.src!.value = apertureShadowTarget.texture;
+  rawTarget.scissorTest = false;
+  rawTarget.viewport.set(0, 0, atlasW, atlasH);
+  // Blur horizontally into the spare target, then vertically into the atlas.
+  blurMaterial.uniforms.src!.value = rawTarget.texture;
   (blurMaterial.uniforms.dir!.value as THREE.Vector2).set(1, 0);
   gl.setRenderTarget(blurTarget);
-  gl.render(blurScene, shadowCam);
+  gl.render(blurScene, blurCam);
   blurMaterial.uniforms.src!.value = blurTarget.texture;
   (blurMaterial.uniforms.dir!.value as THREE.Vector2).set(0, 1);
-  gl.setRenderTarget(apertureShadowTarget);
-  gl.render(blurScene, shadowCam);
-  gl.setClearColor(prevClear, prevAlpha);
-  gl.setRenderTarget(prevTarget);
+  gl.setRenderTarget(out);
+  gl.render(blurScene, blurCam);
 }
 
 // ---------------- Uniforms shared by the shell materials ----------------
@@ -255,6 +287,7 @@ export const lightDebug = { value: new THREE.Vector4(1, 1, 1, 1) };
 export const downlightColor = { value: new THREE.Color(0, 0, 0) };
 export const apertureTexture = { value: apertureTarget.texture };
 export const apertureShadowTexture = { value: apertureShadowTarget.texture };
+export const apertureFurnitureTexture = { value: apertureFurnitureTarget.texture };
 
 export interface ZoneDiffuse {
   /** Bounce light for the zone, captured with the openings covered (the window term adds the daylight). */
@@ -266,6 +299,27 @@ const zoneDiffuse = new Map<ZoneId, ZoneDiffuse>();
 export function zoneDiffuseUniforms(zone: ZoneId): ZoneDiffuse {
   let z = zoneDiffuse.get(zone);
   if (!z) zoneDiffuse.set(zone, (z = { texture: { value: null }, scale: { value: 0 } }));
+  return z;
+}
+
+/** Lamps (floor, table and pendant lights) that light each zone, as point lights in the surface shaders. */
+export const MAX_LAMPS = 4;
+export interface ZoneLamps {
+  /** xyz = position; w = how much of the light goes down (0 = all round, 1 = a downward cone). */
+  pos: { value: THREE.Vector4[] };
+  /** Colour × intensity (irradiance at 1 m); black for unused slots. */
+  color: { value: THREE.Color[] };
+}
+const zoneLamps = new Map<ZoneId, ZoneLamps>();
+export function zoneLampUniforms(zone: ZoneId): ZoneLamps {
+  let z = zoneLamps.get(zone);
+  if (!z) {
+    z = {
+      pos: { value: Array.from({ length: MAX_LAMPS }, () => new THREE.Vector4()) },
+      color: { value: Array.from({ length: MAX_LAMPS }, () => new THREE.Color(0, 0, 0)) },
+    };
+    zoneLamps.set(zone, z);
+  }
   return z;
 }
 

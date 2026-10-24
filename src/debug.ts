@@ -7,6 +7,7 @@ import { STYLE_ORDER, type StyleId } from './catalogue/styles';
 import { BLOCKER_LAYER, apertureTarget, lightDebug } from './render/daylight';
 import { activeCameraRef, controls } from './render/Player';
 import { registry } from './render/registry';
+import { useLayout } from './state/layout';
 import { useStore, type LightsMode, type Panel, type Quality } from './state/store';
 
 const deg = Math.PI / 180;
@@ -36,7 +37,7 @@ export function applyUrlParams() {
   if (p.get('stats') === '1') patch.showStats = true;
   if (p.get('hud') === '0') patch.hudHidden = true;
   const panel = p.get('panel');
-  if (panel === 'style' || panel === 'lighting' || panel === 'views' || panel === 'settings') patch.panel = panel as Panel;
+  if (panel === 'style' || panel === 'furniture' || panel === 'lighting' || panel === 'views' || panel === 'settings') patch.panel = panel as Panel;
   if (p.get('autostart') === '1') patch.started = true;
   s.set(patch);
 
@@ -53,6 +54,7 @@ export function installDebugHook() {
   Object.assign(window, {
     __ruang: {
       store: useStore,
+      layout: useLayout,
       controls,
       registry,
       teleport(x: number, z: number, yawDeg = 0, pitchDeg?: number) {
@@ -89,8 +91,44 @@ export function installDebugHook() {
         else cam?.layers.disable(BLOCKER_LAYER);
       },
       /** True once textures are loaded and the reflection probes have settled. */
+      /** Screen pixel of a world point in the current view. */
+      worldToScreen(x: number, y: number, z: number) {
+        const cam = registry.planCamera ?? activeCameraRef();
+        const gl = registry.gl;
+        if (!cam || !gl) return null;
+        const rect = gl.domElement.getBoundingClientRect();
+        const v = new THREE.Vector3(x, y, z).project(cam);
+        return { x: rect.left + ((v.x + 1) / 2) * rect.width, y: rect.top + ((1 - v.y) / 2) * rect.height };
+      },
+      /** What is under a pixel of the view: the furniture piece (uid, item) or the shell surface, and the hit point. */
+      pickDebug(px: number, py: number) {
+        const cam = registry.planCamera ?? activeCameraRef();
+        const gl = registry.gl;
+        if (!cam || !gl) return null;
+        const rect = gl.domElement.getBoundingClientRect();
+        const ndc = new THREE.Vector2((px / rect.width) * 2 - 1, -(py / rect.height) * 2 + 1);
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera(ndc, cam);
+        const objs: THREE.Object3D[] = [];
+        cam.parent?.traverse(() => undefined);
+        const scene = registry.furnitureRoot?.parent;
+        if (!scene) return null;
+        const hits = ray.intersectObject(scene, true).filter((h) => (h.object as THREE.Mesh).isMesh && h.object.visible);
+        void objs;
+        return hits.slice(0, 3).map((h) => {
+          let o: THREE.Object3D | null = h.object;
+          let uid: string | undefined;
+          while (o && !uid) {
+            uid = o.userData.uid as string | undefined;
+            o = o.parent;
+          }
+          const p = uid ? useLayout.getState().placements.find((q) => q.uid === uid) : undefined;
+          const m = (h.object as THREE.Mesh).material as THREE.Material;
+          return { uid, item: p?.itemId, mat: m.name || m.type, d: +h.distance.toFixed(2), at: h.point.toArray().map((v) => +v.toFixed(2)) };
+        });
+      },
       ready() {
-        return useStore.getState().loading.done && !registry.probeBusy && !registry.flags.probes && registry.zoneEnv.size > 0;
+        return useStore.getState().loading.done && registry.furnitureReady && !registry.probeBusy && !registry.flags.probes && !registry.flags.shadows && registry.zoneEnv.size > 0;
       },
     },
   });

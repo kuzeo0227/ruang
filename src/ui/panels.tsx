@@ -11,6 +11,7 @@ import { registry } from '../render/registry';
 import { sunPosition, sunTimes } from '../render/sun';
 import { useStore, writeSetting, type LightsMode, type Quality } from '../state/store';
 import { PanelFrame, Range, Seg, Switch, compassPoint, formatClock } from './common';
+import { FurniturePanel } from './FurniturePanel';
 
 export function PanelHost() {
   const panel = useStore((s) => s.panel);
@@ -19,6 +20,8 @@ export function PanelHost() {
       return <UnitPanel />;
     case 'style':
       return <StylePanel />;
+    case 'furniture':
+      return <FurniturePanel />;
     case 'lighting':
       return <LightingPanel />;
     case 'views':

@@ -12,7 +12,7 @@ interface Tool {
 
 export const TOOLS: Tool[] = [
   { id: 'style', label: 'Style', icon: Palette, panel: 'style', key: '1' },
-  { id: 'furniture', label: 'Furniture', icon: Sofa, soon: 'Phase 2', key: '2' },
+  { id: 'furniture', label: 'Furniture', icon: Sofa, panel: 'furniture', key: '2' },
   { id: 'lighting', label: 'Lighting', icon: Lightbulb, panel: 'lighting', key: '3' },
   { id: 'views', label: 'Views', icon: Mountain, panel: 'views', key: '4' },
   { id: 'share', label: 'Share', icon: Share2, soon: 'Phase 4', key: '5' },

@@ -4,6 +4,7 @@ import { UNITS } from '../plan/units';
 import { sunPosition } from '../render/sun';
 import { useStore } from '../state/store';
 import { STYLE_SHORT, formatClock } from './common';
+import { TotalPill } from './EditHud';
 
 export function TopBar() {
   const unit = useStore((s) => s.unit);
@@ -41,6 +42,7 @@ export function TopBar() {
       </div>
       <div className="group">
         {showStats && <StatsChip />}
+        <TotalPill />
         <button className={`chip glass c-lighting ${panel === 'lighting' ? 'open' : ''}`} onClick={() => togglePanel('lighting')} aria-label="Time of day">
           {day ? <Sun className="ic" size={16} /> : <Moon className="ic" size={16} />}
           <span className="tabular">{formatClock(time)}</span>

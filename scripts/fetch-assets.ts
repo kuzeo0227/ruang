@@ -8,7 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unzipSync } from 'fflate';
-import { MODELS, shellTextureSets, type TextureManifest, type TextureManifestEntry, type TextureSetSpec } from '../src/assets/textureSets';
+import { MODELS, allTextureSets, type TextureManifest, type TextureManifestEntry, type TextureSetSpec } from '../src/assets/textureSets';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'assets');
 const TEX = join(ROOT, 'tex');
@@ -101,7 +101,7 @@ async function pool<T>(items: T[], limit: number, fn: (item: T) => Promise<void>
 }
 
 async function main() {
-  const sets = shellTextureSets();
+  const sets = allTextureSets();
   const manifest: TextureManifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : {};
   const complete = (s: TextureSetSpec) => {
     const m = manifest[s.id];
@@ -110,10 +110,10 @@ async function main() {
   const todo = sets.filter((s) => !complete(s));
   const modelsTodo = MODELS.filter((id) => !existsSync(join(MODEL_DIR, id, `${id}.gltf`)));
   if (!todo.length && !modelsTodo.length) {
-    console.log(`Assets ready (${sets.length} texture sets, ${MODELS.length} model).`);
+    console.log(`Assets ready (${sets.length} texture sets, ${MODELS.length} models).`);
     return;
   }
-  console.log(`Downloading ${todo.length} texture set(s) and ${modelsTodo.length} model(s) from Poly Haven and ambientCG (CC0). First run only.`);
+  console.log(`Downloading ${todo.length} texture set(s) and ${modelsTodo.length} model(s) from Poly Haven and ambientCG (CC0). First run only, about 250 MB.`);
   await pool(todo, 4, async (spec) => {
     const entry = spec.source === 'polyhaven' ? await fetchPolyHavenTexture(spec) : await fetchAmbientCgTexture(spec);
     manifest[spec.id] = entry;

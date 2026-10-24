@@ -9,7 +9,7 @@ import type { ZoneId } from '../shell/types';
 import { useStore } from '../state/store';
 import { BLOCKER_LAYER, captureApertures, createBlockers, downlightColor, renderApertureShadows, zoneDiffuseUniforms } from './daylight';
 import { QUALITY } from './quality';
-import { invalidateLighting, registry } from './registry';
+import { hideFurnitureNear, invalidateLighting, registry } from './registry';
 import { applyBackdrop, skyMaterial, type BackdropMeta } from './skyMaterial';
 import { getShell } from './shellCache';
 import { sunLight, sunPosition } from './sun';
@@ -37,6 +37,18 @@ export function kelvinColor(k: number): THREE.Color {
   const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.5177312231 * Math.log(t - 10) - 305.0447927307;
   const c = (v: number) => Math.max(0, Math.min(255, v)) / 255;
   return new THREE.Color().setRGB(c(r), c(g), c(b), THREE.SRGBColorSpace);
+}
+
+/** Whether the room lights are on: by the switch, or in Auto once the sun is low. */
+export function lightsOnAt(mode: 'auto' | 'on' | 'off', month: number, time: number): boolean {
+  return mode === 'on' || (mode === 'auto' && sunPosition(month, time).elevation < 4);
+}
+
+export function useLightsOn(): boolean {
+  const mode = useStore((s) => s.lights);
+  const time = useStore((s) => s.time);
+  const month = useStore((s) => s.month);
+  return lightsOnAt(mode, month, time);
 }
 
 export function Lighting() {
@@ -102,7 +114,7 @@ export function Lighting() {
       light.intensity = SUN_STRENGTH * lightC.intensity;
       light.color.setRGB(...lightC.color);
     }
-    registry.lightsOn = lightsMode === 'on' || (lightsMode === 'auto' && el < 4);
+    registry.lightsOn = lightsOnAt(lightsMode, month, time);
     invalidateLighting(true);
   }, [time, month, lightsMode]);
 
@@ -144,10 +156,17 @@ export function Lighting() {
       const d = (skyMaterial.uniforms.sunDirection!.value as THREE.Vector3).clone().normalize();
       light.position.copy(target.position).addScaledVector(d, 40);
     }
-    if (registry.flags.shadows) {
+    if (registry.planMode) {
+      // With the ceilings off for the plan view, redrawn shadows would let the sun in through the
+      // roof, so all shadows and probes wait until walking again.
+    } else if (registry.flags.shadows) {
       gl.shadowMap.needsUpdate = true;
       registry.flags.shadows = false;
-      renderApertureShadows(gl, scene, shell.apertures);
+      registry.flags.sunShadow = false;
+      renderApertureShadows(gl, scene, shell.apertures, registry.furnitureRoot);
+    } else if (registry.flags.sunShadow) {
+      gl.shadowMap.needsUpdate = true;
+      registry.flags.sunShadow = false;
     }
     skyMaterial.uniforms.time!.value = performance.now() / 1000;
   });
@@ -246,7 +265,7 @@ function Probes({ size }: { size: number }) {
 
   useFrame(() => {
     const shell = registry.shell;
-    if (!shell || !registry.skyEnv) return;
+    if (!shell || !registry.skyEnv || registry.planMode) return;
     const indoor = (id: ZoneId) => shell.apertures.some((a) => a.zone === id);
     // Start once the shadows for the new lighting have been drawn.
     if (registry.flags.probes && queue.current.length === 0 && !registry.flags.shadows) {
@@ -283,6 +302,7 @@ function Probes({ size }: { size: number }) {
       const zone = shell.zones.find((z) => z.id === id);
       if (!zone) continue;
       cube.cam.position.set(...zone.probe);
+      const showFurniture = hideFurnitureNear(cube.cam.position);
       if (pass.current === 1) {
         seeBlockers(false);
         cube.cam.update(gl, scene);
@@ -303,6 +323,7 @@ function Probes({ size }: { size: number }) {
         const maps = pass.current === 0 ? scratch.current : diff.current;
         maps.set(id, pmrem.fromCubemap(cube.rt.texture, maps.get(id) ?? null));
       }
+      showFurniture();
     }
     gl.autoClear = autoClear;
     bind(diff.current);
@@ -324,15 +345,11 @@ function Probes({ size }: { size: number }) {
 
 /** Ceiling downlights: the fittings, and the shared colour the surface shaders light their zone with. */
 function Downlights() {
-  const lightsMode = useStore((s) => s.lights);
-  const time = useStore((s) => s.time);
-  const month = useStore((s) => s.month);
   const styleId = useStore((s) => s.style);
   const unit = useStore((s) => s.unit);
   const kelvin = STYLES[styleId].lightKelvin;
   const shell = useMemo(() => getShell(unit), [unit]);
-  const el = sunPosition(month, time).elevation;
-  const on = lightsMode === 'on' || (lightsMode === 'auto' && el < 4);
+  const on = useLightsOn();
 
   const color = useMemo(() => kelvinColor(kelvin), [kelvin]);
   const trim = useMemo(() => new THREE.MeshStandardMaterial({ color: '#d8d6d2', roughness: 0.5, metalness: 0.2 }), []);
@@ -345,8 +362,9 @@ function Downlights() {
     invalidateLighting();
   }, [on, color]);
 
+  const plan = useStore((s) => s.mode === 'plan');
   return (
-    <group>
+    <group visible={!plan}>
       {shell.downlights.map((d, i) => (
         <group key={i} position={[d.position[0], CEIL - 0.002, d.position[2]]}>
           <mesh rotation={[Math.PI / 2, 0, 0]} material={on ? glow : lens}>

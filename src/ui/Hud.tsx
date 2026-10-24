@@ -1,12 +1,14 @@
 // Everything drawn over the 3D view, plus the panel shortcuts and touch/mouse switching.
 
-import { DoorClosed, DoorOpen, MousePointer2, Ruler, X } from 'lucide-react';
+import { DoorClosed, DoorOpen, Footprints, Map as MapIcon, MousePointer2, Ruler, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { formatLength } from '../render/MeasureView';
 import { interact } from '../render/Player';
+import { useLayout } from '../state/layout';
 import { useStore, type Panel } from '../state/store';
 import { STYLE_SHORT } from './common';
 import { Dock, TOOLS } from './Dock';
+import { CarryHint, FocusCard, Toast, TouchSheet } from './EditHud';
 import { Minimap } from './Minimap';
 import { LoadingOverlay, StartOverlay, requestLock, useFirstLoadDone } from './Overlays';
 import { PanelHost } from './panels';
@@ -18,6 +20,8 @@ export function Hud() {
   const touch = useStore((s) => s.touchUi);
   const started = useStore((s) => s.started);
   const panel = useStore((s) => s.panel);
+  const plan = useStore((s) => s.mode === 'plan');
+  const walking = started && !plan;
   useShortcuts();
   useInputSwitch();
 
@@ -31,16 +35,21 @@ export function Hud() {
       {!hudHidden && (
         <>
           <TopBar />
-          {started && <Crosshair />}
-          {started && <ActionHint />}
+          {started && <FocusCard />}
+          {walking && <Crosshair />}
+          {walking && <ActionHint />}
+          {walking && <CarryHint />}
+          {started && <TouchSheet />}
+          <Toast />
           <MeasureChip />
           <StyleLoadingPill />
-          <Minimap />
+          {panel !== 'furniture' && !plan && <Minimap />}
           <div className="bottom">
+            {started && <ModeToggle />}
             <Dock />
           </div>
-          {!touch && <KeyHints />}
-          {!touch && started && <UnlockedHint />}
+          {!touch && (plan ? <PlanHints /> : <KeyHints />)}
+          {!touch && walking && <UnlockedHint />}
           <PanelHost />
         </>
       )}
@@ -54,8 +63,9 @@ export function Hud() {
 function Crosshair() {
   const hint = useStore((s) => s.hint);
   const measuring = useStore((s) => s.measuring);
+  const piece = useLayout((s) => !!(s.hovered || s.carrying));
   return (
-    <div className={`crosshair ${hint ? 'target' : ''} ${measuring ? 'measure' : ''}`}>
+    <div className={`crosshair ${hint || piece ? 'target' : ''} ${piece ? 'piece' : ''} ${measuring ? 'measure' : ''}`}>
       <i />
     </div>
   );
@@ -65,7 +75,8 @@ function Crosshair() {
 function ActionHint() {
   const hint = useStore((s) => s.hint);
   const touch = useStore((s) => s.touchUi);
-  if (!hint) return null;
+  const furniture = useLayout((s) => !!(s.hovered || s.carrying || s.selected));
+  if (!hint || furniture) return null;
   const Icon = hint.startsWith('Open') ? DoorOpen : DoorClosed;
   return touch ? (
     <button className="actionhint glass tappable" onClick={interact}>
@@ -119,6 +130,46 @@ function StyleLoadingPill() {
   );
 }
 
+/** Walk / Plan switch beside the dock (Tab on a keyboard). */
+function ModeToggle() {
+  const mode = useStore((s) => s.mode);
+  const set = useStore((s) => s.set);
+  return (
+    <div className="modetoggle glass" role="radiogroup" aria-label="View">
+      <button role="radio" aria-checked={mode === 'walk'} className={mode === 'walk' ? 'on' : ''} onClick={() => set({ mode: 'walk' })}>
+        <Footprints className="ic" size={16} />
+        Walk
+      </button>
+      <button role="radio" aria-checked={mode === 'plan'} className={mode === 'plan' ? 'on' : ''} onClick={() => set({ mode: 'plan' })}>
+        <MapIcon className="ic" size={16} />
+        Plan
+      </button>
+    </div>
+  );
+}
+
+function PlanHints() {
+  return (
+    <div className="hints">
+      <span className="key">
+        <kbd>Drag</kbd>Move a piece
+      </span>
+      <span className="key">
+        <kbd>R</kbd>Rotate
+      </span>
+      <span className="key">
+        <kbd>Wheel</kbd>Zoom
+      </span>
+      <span className="key">
+        <kbd>Double-click</kbd>Walk there
+      </span>
+      <span className="key">
+        <kbd>Tab</kbd>Walk
+      </span>
+    </div>
+  );
+}
+
 function KeyHints() {
   return (
     <div className="hints">
@@ -126,13 +177,16 @@ function KeyHints() {
         <kbd>WASD</kbd>Move
       </span>
       <span className="key">
-        <kbd>E</kbd>Door
+        <kbd>E</kbd>Pick up / door
       </span>
       <span className="key">
         <kbd>M</kbd>Measure
       </span>
       <span className="key">
         <kbd>L</kbd>Lights
+      </span>
+      <span className="key">
+        <kbd>Tab</kbd>Plan
       </span>
     </div>
   );
@@ -158,8 +212,14 @@ function useShortcuts() {
       if (!s.started) return;
       const tool = TOOLS.find((t) => t.key === e.key);
       if (tool?.panel) s.togglePanel(tool.panel as Exclude<Panel, null>);
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        if (!useLayout.getState().carrying) s.set({ mode: s.mode === 'plan' ? 'walk' : 'plan' });
+      }
       if (e.key === 'Escape') {
+        if (useLayout.getState().carrying) return;
         if (s.panel) s.set({ panel: null });
+        else if (useLayout.getState().selected) useLayout.getState().set({ selected: null });
         else if (s.measuring) s.set({ measuring: false, measure: { a: null, b: null } });
       }
     };

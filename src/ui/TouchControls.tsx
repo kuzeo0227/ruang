@@ -3,6 +3,7 @@
 
 import { Ruler } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { selectAt } from '../render/EditController';
 import { controls, measureAction } from '../render/Player';
 import { useStore } from '../state/store';
 
@@ -13,21 +14,22 @@ export function TouchControls() {
   const touchUi = useStore((s) => s.touchUi);
   const started = useStore((s) => s.started);
   const measuring = useStore((s) => s.measuring);
+  const plan = useStore((s) => s.mode === 'plan');
   const [stick, setStick] = useState<{ x: number; y: number; kx: number; ky: number } | null>(null);
 
   useEffect(() => {
     let move: { id: number; ox: number; oy: number } | null = null;
-    let look: { id: number; x: number; y: number } | null = null;
+    let look: { id: number; x: number; y: number; sx: number; sy: number; t: number } | null = null;
     const down = (e: PointerEvent) => {
       if (e.pointerType !== 'touch' || !(e.target instanceof HTMLCanvasElement)) return;
       const st = useStore.getState();
-      if (!st.started) return;
+      if (!st.started || st.mode === 'plan') return;
       if (st.panel) st.set({ panel: null });
       if (e.clientX < window.innerWidth * 0.45 && !move) {
         move = { id: e.pointerId, ox: e.clientX, oy: e.clientY };
         setStick({ x: e.clientX, y: e.clientY, kx: 0, ky: 0 });
       } else if (!look) {
-        look = { id: e.pointerId, x: e.clientX, y: e.clientY };
+        look = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() };
       }
     };
     const drag = (e: PointerEvent) => {
@@ -60,7 +62,11 @@ export function TouchControls() {
         controls.moveY = 0;
         setStick(null);
       }
-      if (look && e.pointerId === look.id) look = null;
+      if (look && e.pointerId === look.id) {
+        // A quick tap (not a drag) picks the piece under the finger.
+        if (Math.hypot(e.clientX - look.sx, e.clientY - look.sy) < 10 && performance.now() - look.t < 350) selectAt(e.clientX, e.clientY);
+        look = null;
+      }
     };
     window.addEventListener('pointerdown', down);
     window.addEventListener('pointermove', drag);
@@ -74,7 +80,7 @@ export function TouchControls() {
     };
   }, []);
 
-  if (!touchUi || !started) return null;
+  if (!touchUi || !started || plan) return null;
   return (
     <>
       <div className={`joystick ${stick ? 'live' : ''}`} style={stick ? { left: stick.x, top: stick.y } : undefined} aria-hidden>
