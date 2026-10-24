@@ -126,7 +126,11 @@ and on a phone over the same Wi-Fi. It is not a buyer-facing product.
   plank rotation and roughness folded in; downlights become spotlights with the same beam, lamps point
   lights. Intel Open Image Denoise (oidn-web, WebGPU) cleans the image at 16, 64 and 256 samples, using
   albedo and normal guides rendered once at the start. The result goes through the app's exposure,
-  white balance, bloom and tone mapping, and Save writes a PNG.
+  white balance, bloom and tone mapping, and Save writes a PNG. Exposure is not left to the eye
+  adaptation (noisy early samples would fool it): 8 samples are traced first to measure the light,
+  then the room is exposed by the walk view's rule and the view behind the glass is dimmed or
+  brightened (a photographer's "window pull") so it looks as it did while walking. The walk view stays
+  on screen until the first denoised image is ready.
 
 ## Phases
 

@@ -376,6 +376,15 @@ button.view:disabled { cursor: default; }
 @media (max-width: 1360px) {
   .hints { display: none; }
 }
+/* The top bar sheds labels as the window narrows, so its chips never run into each other. */
+@media (max-width: 1180px) {
+  .topbar .logo .word, .topbar .chip-sub, .topbar .c-views .chip-label, .topbar .photo-btn span { display: none; }
+  .topbar .logo { padding: 0 6px; }
+}
+@media (max-width: 880px) {
+  .topbar .chev, .topbar .hide-phone { display: none; }
+  .topbar .group { gap: 6px; }
+}
 @media (max-width: 760px) {
   .hud { --edge: 10px; }
   .sa { font-size: 11px; padding: 8px 0 6px; }
@@ -405,11 +414,16 @@ button.view:disabled { cursor: default; }
   .measurechip, .loadpill { top: calc(var(--top) + 50px); font-size: 12px; }
   .unlocked { display: none; }
 }
-@media (max-width: 480px) {
-  /* Too narrow for every chip: the view is also in the dock, Photo Mode is in Settings, and the
-     running total moves under the right end of the bar. */
-  .topbar .unit-chip, .topbar .c-views, .topbar .photo-btn { display: none; }
+/* Too narrow for every chip: the view is also in the dock, Photo Mode is in Settings, and the
+   running total moves under the right end of the bar. */
+@media (max-width: 700px) {
+  .topbar .c-views, .topbar .photo-btn { display: none; }
+}
+@media (max-width: 580px) {
   .topbar .c-price { position: absolute; top: calc(100% + 8px); right: 0; }
+}
+@media (max-width: 480px) {
+  .topbar .unit-chip { display: none; }
   .howto.keys { grid-template-columns: 1fr; }
 }
 @media (max-height: 520px) and (orientation: landscape) {

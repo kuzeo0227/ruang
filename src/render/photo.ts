@@ -170,6 +170,86 @@ function buildLights(shell: ShellData): THREE.Group {
   return group;
 }
 
+/** Samples traced to measure the light before the photo proper (see PhotoSession.meter). */
+export const METER_SAMPLES = 8;
+/** Limits on how far the view behind the glass may be dimmed or brightened. */
+const PULL_MIN = 0.2;
+const PULL_MAX = 2;
+
+/** The walk view's auto exposure: exposure = clamp(key / average luminance, min, max). */
+export interface ExposureRule {
+  key: number;
+  min: number;
+  max: number;
+}
+
+/**
+ * A photographer's "window pull": how much to dim the view seen through the windows so it looks as
+ * it did in the walk view, and the average luminance to hold the exposure at, with the room
+ * exposed by the walk view's own rule (a centre-weighted log average, see Effects.tsx). It is
+ * measured on 8 × 8 pixel blocks, so a few noisy samples are enough. The camera sees the sky or the
+ * view where the normal guide has no normal (its clear grey).
+ */
+function windowPull(color: Float32Array, normal: ImageData, width: number, height: number, walkAvg: number, rule: ExposureRule): { pull: number; avg: number } {
+  const B = 8;
+  const bw = Math.ceil(width / B);
+  const bh = Math.ceil(height / B);
+  const room = new Float64Array(bw * bh);
+  const view = new Float64Array(bw * bh);
+  const count = new Float64Array(bw * bh);
+  const n = normal.data;
+  const grey = (v: number) => Math.abs(v - 127.5) <= 1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      const l = 0.2126 * color[i * 4]! + 0.7152 * color[i * 4 + 1]! + 0.0722 * color[i * 4 + 2]!;
+      if (!Number.isFinite(l)) continue;
+      const k = Math.floor(y / B) * bw + Math.floor(x / B);
+      if (grey(n[i * 4]!) && grey(n[i * 4 + 1]!) && grey(n[i * 4 + 2]!)) view[k]! += l;
+      else room[k]! += l;
+      count[k]!++;
+    }
+  }
+  const weight = new Float64Array(bw * bh);
+  for (let by = 0; by < bh; by++) {
+    for (let bx = 0; bx < bw; bx++) {
+      const dx = ((bx + 0.5) * B) / width - 0.5;
+      const dy = ((by + 0.5) * B) / height - 0.5;
+      weight[by * bw + bx] = count[by * bw + bx]! > 0 ? 0.35 + 0.65 * Math.exp(-(dx * dx + dy * dy) * 6) : 0;
+    }
+  }
+  const exposureFor = (pull: number) => {
+    let sum = 0;
+    let wsum = 0;
+    for (let k = 0; k < weight.length; k++) {
+      const w = weight[k]!;
+      if (w === 0) continue;
+      const l = (room[k]! + pull * view[k]!) / count[k]!;
+      sum += w * Math.log2(THREE.MathUtils.clamp(l, 1e-4, 64));
+      wsum += w;
+    }
+    return THREE.MathUtils.clamp(rule.key / 2 ** (sum / Math.max(wsum, 1e-9)), rule.min, rule.max);
+  };
+  // The view looks the same when pull × exposure matches the walk view's exposure. That product
+  // only grows with the pull (a brighter view lowers the exposure, but by less), so bisect.
+  const walk = THREE.MathUtils.clamp(rule.key / walkAvg, rule.min, rule.max);
+  const seen = (pull: number) => pull * exposureFor(pull);
+  let pull: number;
+  if (seen(PULL_MIN) >= walk) pull = PULL_MIN;
+  else if (seen(PULL_MAX) <= walk) pull = PULL_MAX;
+  else {
+    let lo = Math.log2(PULL_MIN);
+    let hi = Math.log2(PULL_MAX);
+    for (let i = 0; i < 24; i++) {
+      const mid = (lo + hi) / 2;
+      if (seen(2 ** mid) < walk) lo = mid;
+      else hi = mid;
+    }
+    pull = 2 ** ((lo + hi) / 2);
+  }
+  return { pull, avg: rule.key / exposureFor(pull) };
+}
+
 export interface PhotoOptions {
   /** Samples to stop at. */
   target: number;
@@ -183,14 +263,21 @@ export class PhotoSession {
   readonly tracer: WebGLPathTracer;
   private worker = new ParallelMeshBVHWorker();
   private undo: (() => void)[] = [];
-  private materialUndo: (() => void)[] = [];
+  /** What prepare() changed, put back as soon as the tracer has read the scene. */
+  private prepUndo: (() => void)[] = [];
   private copies = new Map<THREE.Material, THREE.Material | null>();
   private lights: THREE.Group | null = null;
   private env: THREE.DataTexture | null = null;
   private background: THREE.WebGLRenderTarget | null = null;
   private disposed = false;
   private guides: Guides | null = null;
+  private shown = false;
+  /** The scene is built and the tracer is running. */
   ready = false;
+  /** The light has been measured and the photo proper is being traced. */
+  metered = false;
+  /** Brightness of the view seen through the glass, relative to the sky it lights the room with. */
+  pull = 1;
 
   constructor(
     private gl: THREE.WebGLRenderer,
@@ -227,7 +314,7 @@ export class PhotoSession {
       await this.build(shell);
     } catch (err) {
       // Put the scene back at once rather than when Photo Mode is closed.
-      this.restoreMaterials();
+      this.restoreScene();
       for (const f of this.undo.splice(0).reverse()) f();
       throw err;
     }
@@ -246,51 +333,83 @@ export class PhotoSession {
     this.lights.visible = false;
     scene.add(this.lights);
 
+    // The tracer takes the geometry and materials from the scene at once and builds its BVH in a
+    // worker, so the scene is only changed for that moment (and for the denoiser's guide images,
+    // drawn from the same scene at the size the tracer renders at).
     this.prepare(scene, camera);
-    // The tracer reads the scene's environment as it finishes building, and the app's own (a
+    // The tracer reads the scene's environment when it finishes building, and the app's own (a
     // prefiltered render target) is not something it can sample: leave it out until the sky is set.
     const prevEnv = scene.environment;
-    const prevBackground = scene.background;
     scene.environment = null;
     try {
-      await this.tracer.setSceneAsync(scene, camera, { onProgress: this.options.onProgress });
+      const built = this.tracer.setSceneAsync(scene, camera, { onProgress: this.options.onProgress });
+      const size = gl.getDrawingBufferSize(new THREE.Vector2());
+      const w = Math.floor(size.x * this.options.renderScale);
+      const h = Math.floor(size.y * this.options.renderScale);
+      this.guides = renderGuides(gl, scene, camera, w, h, (m) => (m as THREE.MeshPhysicalMaterial).transmission > 0);
+      this.restoreScene();
+      await built;
     } finally {
       scene.environment = prevEnv;
     }
     if (this.disposed) return;
 
-    scene.environment = this.env;
-    scene.background = this.background.texture;
-    this.tracer.updateEnvironment();
-    scene.environment = prevEnv;
-    scene.background = prevBackground;
+    this.setEnvironment(1);
     this.lights.visible = true;
     this.tracer.updateLights();
     this.lights.visible = false;
+    this.ready = true;
+  }
 
-    // Guide images for the denoiser, at the size the tracer will render.
-    const size = gl.getDrawingBufferSize(new THREE.Vector2());
-    const w = Math.floor(size.x * this.options.renderScale);
-    const h = Math.floor(size.y * this.options.renderScale);
-    this.guides = renderGuides(gl, scene, camera, w, h, (m) => (m as THREE.MeshPhysicalMaterial).transmission > 0);
+  /** The sky and the view for the tracer; the view seen through the glass at `pull` brightness. */
+  private setEnvironment(pull: number) {
+    const { scene } = this;
+    const prev = { environment: scene.environment, background: scene.background, intensity: scene.backgroundIntensity };
+    scene.environment = this.env;
+    scene.background = this.background!.texture;
+    scene.backgroundIntensity = pull;
+    this.tracer.updateEnvironment();
+    scene.environment = prev.environment;
+    scene.background = prev.background;
+    scene.backgroundIntensity = prev.intensity;
+  }
 
-    // The tracer holds its own copy of everything now: put the app's materials back and show
-    // only the result.
-    this.restoreMaterials();
-    for (const child of scene.children) {
+  /**
+   * Measures the light in the first samples, then starts the photo proper with the view behind the
+   * glass dimmed to look as it did in the walk view. Returns the average luminance to hold the
+   * exposure at.
+   */
+  meter(walkAvg: number, rule: ExposureRule): number {
+    const rt = this.tracer.target;
+    const g = this.guides;
+    const fits = g !== null && rt.width === g.normal.width && rt.height === g.normal.height;
+    const { pull, avg } = fits ? windowPull(readTarget(this.gl, rt), g.normal, rt.width, rt.height, walkAvg, rule) : { pull: 1, avg: walkAvg };
+    this.setEnvironment(pull); // which also restarts the accumulation
+    this.pull = pull;
+    this.metered = true;
+    return avg;
+  }
+
+  get isShown(): boolean {
+    return this.shown;
+  }
+
+  /** Show only the result from now on (the walk view stays up until there is something to show). */
+  show() {
+    for (const child of this.scene.children) {
       if (child === this.display || !child.visible) continue;
       child.visible = false;
       this.undo.push(() => (child.visible = true));
     }
     this.display.visible = true;
-    this.ready = true;
+    this.shown = true;
   }
 
   /** Swap in traced copies of the materials and hide what shouldn't be traced. */
   private prepare(scene: THREE.Scene, camera: THREE.Camera) {
     const hide = (o: THREE.Object3D) => {
       o.visible = false;
-      this.undo.push(() => (o.visible = true));
+      this.prepUndo.push(() => (o.visible = true));
     };
     const visit = (o: THREE.Object3D) => {
       if (!o.visible || o === this.display || o === this.lights) return;
@@ -305,7 +424,7 @@ export class PhotoSession {
         });
         if (copies.some((c) => !c)) return hide(o);
         o.material = Array.isArray(src) ? (copies as THREE.Material[]) : copies[0]!;
-        this.materialUndo.push(() => (o.material = src));
+        this.prepUndo.push(() => (o.material = src));
       } else if (o instanceof THREE.Line || o instanceof THREE.Points || o instanceof THREE.Sprite) {
         return hide(o);
       }
@@ -314,8 +433,9 @@ export class PhotoSession {
     visit(scene);
   }
 
-  private restoreMaterials() {
-    for (const f of this.materialUndo.splice(0)) f();
+  /** Put back what prepare() changed. */
+  private restoreScene() {
+    for (const f of this.prepUndo.splice(0).reverse()) f();
   }
 
   /** Accumulate a sample (one tile of one, really) until the target is reached. */
@@ -339,7 +459,7 @@ export class PhotoSession {
 
   dispose() {
     this.disposed = true;
-    this.restoreMaterials();
+    this.restoreScene();
     for (const f of this.undo.splice(0).reverse()) f();
     this.display.visible = false;
     if (this.lights) this.scene.remove(this.lights);

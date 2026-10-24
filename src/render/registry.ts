@@ -1,6 +1,7 @@
 // Shared, non-reactive scene state used across 3D components (read every frame, so kept out of React).
 
 import * as THREE from 'three';
+import type { PhotoSession } from './photo';
 import type { ShellData, SpaceId, ZoneId } from '../shell/types';
 
 /** A placed piece of furniture in the scene. */
@@ -60,6 +61,12 @@ export const registry = {
   exposure: { key: 0.18, min: 1, max: 6, bias: 1 },
   /** Set to make exposure jump straight to the new view (after a teleport) instead of adapting. */
   exposureReset: false,
+  /** The eye's adapted state (1 × 1: log2 average luminance, then the colour cast). */
+  adapted: null as THREE.WebGLRenderTarget | null,
+  /** Photo Mode: hold the eye at this average luminance (log2) and colour instead of adapting. */
+  exposureHold: null as number | null,
+  /** The running Photo Mode session (diagnostics). */
+  photoSession: null as PhotoSession | null,
   /** White balance: how much of the light is daylight (vs. downlights), and the downlights' correction. */
   whiteBalance: { daylight: 1, night: new THREE.Color(1, 1, 1) },
   flags: {

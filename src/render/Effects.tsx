@@ -50,13 +50,18 @@ const meterMaterial = new THREE.ShaderMaterial({
   depthWrite: false,
 });
 
-/** Eye adaptation: moves the remembered average towards this frame's, faster towards bright. */
+/**
+ * Eye adaptation: moves the remembered average towards this frame's, faster towards bright. Photo
+ * Mode can hold it at a set average (its noisy early samples would mislead the meter).
+ */
 const adaptMaterial = new THREE.ShaderMaterial({
   uniforms: {
     tMeter: { value: null as THREE.Texture | null },
     tPrev: { value: null as THREE.Texture | null },
     dt: { value: 0 },
     reset: { value: 1 },
+    hold: { value: 0 },
+    holdAvg: { value: 0 },
   },
   vertexShader: fullscreenVertex,
   fragmentShader: /* glsl */ `
@@ -64,17 +69,29 @@ const adaptMaterial = new THREE.ShaderMaterial({
     uniform sampler2D tPrev;
     uniform float dt;
     uniform float reset;
+    uniform float hold;
+    uniform float holdAvg;
     void main() {
       vec4 m = textureLod(tMeter, vec2(0.5), 10.0);
       vec3 current = vec3(m.x, m.z, m.w) / max(m.y, 1e-4);
       vec3 prev = texture2D(tPrev, vec2(0.5)).rgb;
       float rate = current.x > prev.x ? 2.8 : 1.4;
       vec3 next = reset > 0.5 ? current : prev + (current - prev) * (1.0 - exp(-dt * rate));
+      if (hold > 0.5) next = vec3(holdAvg, prev.yz);
       gl_FragColor = vec4(next, 1.0);
     }`,
   depthTest: false,
   depthWrite: false,
 });
+
+/** The eye's adapted average luminance (linear), or null before the first frame. */
+export function adaptedAverage(gl: THREE.WebGLRenderer): number | null {
+  const rt = registry.adapted;
+  if (!rt) return null;
+  const buf = new Uint16Array(4);
+  gl.readRenderTargetPixels(rt, 0, 0, 1, 1, buf);
+  return 2 ** THREE.DataUtils.fromHalfFloat(buf[0]!);
+}
 
 const quadScene = new THREE.Scene();
 const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), meterMaterial);
@@ -163,12 +180,15 @@ class ExposureEffectImpl extends Effect {
     adaptMaterial.uniforms.tPrev!.value = prev.texture;
     adaptMaterial.uniforms.dt!.value = Math.min(deltaTime ?? 0.016, 0.1);
     adaptMaterial.uniforms.reset!.value = this.fresh || registry.exposureReset ? 1 : 0;
+    adaptMaterial.uniforms.hold!.value = registry.exposureHold === null ? 0 : 1;
+    adaptMaterial.uniforms.holdAvg!.value = registry.exposureHold ?? 0;
     registry.exposureReset = false;
     renderer.setRenderTarget(next);
     renderer.render(quadScene, quadCam);
     this.current = 1 - this.current;
     this.fresh = false;
     this.uniforms.get('tAdapted')!.value = next.texture;
+    registry.adapted = next;
     renderer.setRenderTarget(prevTarget);
   }
 

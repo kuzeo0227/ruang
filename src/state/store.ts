@@ -59,7 +59,8 @@ export type ViewMode = 'walk' | 'plan';
 
 /** Photo Mode: a path-traced still of the current view. */
 export interface PhotoState {
-  status: 'preparing' | 'rendering' | 'denoising' | 'done' | 'failed';
+  /** Preparing the scene, measuring the light (for the exposure), tracing, the final denoise. */
+  status: 'preparing' | 'metering' | 'rendering' | 'denoising' | 'done' | 'failed';
   /** The image shown has been through the denoiser. */
   denoised: boolean;
   /** Preparing the scene, 0 to 1. */

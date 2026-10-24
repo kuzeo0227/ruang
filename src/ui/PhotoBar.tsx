@@ -5,6 +5,7 @@ import { AlertTriangle, Camera, Check, Download, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { STYLES } from '../catalogue/styles';
 import { UNITS } from '../plan/units';
+import { METER_SAMPLES } from '../render/photo';
 import { PHOTO_SAMPLES } from '../render/PhotoMode';
 import { registry } from '../render/registry';
 import { useStore } from '../state/store';
@@ -50,11 +51,13 @@ export function PhotoBar() {
   }, [open]);
   if (!photo) return null;
 
-  const share = photo.status === 'preparing' ? photo.progress : photo.samples / photo.target;
+  const share = photo.status === 'preparing' ? photo.progress : photo.status === 'metering' ? Math.min(photo.samples / METER_SAMPLES, 1) : photo.samples / photo.target;
   const label =
     photo.status === 'preparing'
       ? `Preparing the scene · ${Math.round(photo.progress * 100)}%`
-      : photo.status === 'rendering'
+      : photo.status === 'metering'
+        ? 'Measuring the light'
+        : photo.status === 'rendering'
         ? `Tracing light · ${Math.floor(photo.samples)} of ${photo.target} samples`
         : photo.status === 'denoising'
           ? 'Denoising the final image'
@@ -72,7 +75,7 @@ export function PhotoBar() {
           <i style={{ width: `${Math.round(share * 100)}%` }} />
         </div>
       </div>
-      <button className="cta" onClick={savePhoto} disabled={photo.status === 'preparing' || photo.status === 'failed'}>
+      <button className="cta" onClick={savePhoto} disabled={photo.status === 'preparing' || photo.status === 'metering' || photo.status === 'failed'}>
         <Download className="ic" size={16} />
         Save
       </button>
