@@ -164,11 +164,17 @@ and on a phone over the same Wi-Fi. It is not a buyer-facing product.
      by day; from the balcony end a 1 px line can show across the Brutalist leather sofa, along the
      hidden skirting edge behind it (not ambient occlusion, sun, window light, bounce or
      reflections; cause not found); frame rate with furniture is untested on the Arc 130V.
-3. **Light and views**:
+3. **Light and views** (done, awaiting your walk-through):
    - Time-of-day and month sliders.
-   - Per-room switches, dimmers and colour temperature.
-   - All four views, with the rainforest and KL skyline rendered in Blender.
-   - Photo Mode.
+   - Per-room switches, dimmers and colour temperature, scenes, and wall switch plates.
+   - All four views: the KL skyline, rainforest and beach rendered in Blender, each with a night
+     pass; the sun's glitter on the sea.
+   - Photo Mode: path-traced, denoised, with the window view held as seen while walking.
+   - Also fixed: the landscape stayed lit after sunset (dusk now has a blue hour); the top bar's
+     chips overlapped between 480 and 1180 px wide.
+   - Known gaps: Photo Mode's speed is untested on the Arc 130V and needs WebGPU for the denoiser;
+     the path tracer sees plain textures (no tile joints or per-plank tone); views are flat images
+     (no parallax); from Type A the sea glitter shows only on mornings around June.
 4. **Complete**:
    - All five styles.
    - Types B1 and B.

@@ -7,14 +7,53 @@ local web page on your own computer.
 
 ## Status
 
-**Phase 2 (furniture) is ready for you to walk through.** Type A is now furnished in all five
+**Phase 3 (light and views) is ready for you to walk through.**
+
+- **Room lights.** Every room has its own switch, dimmer and colour temperature (warm 2700 K to cool
+  5000 K) on the Lighting panel, plus scenes: Auto (lights come on at dusk), Evening, Movie, All on,
+  All off. There are real switch plates by the doors: look at one and press <kbd>E</kbd>. Lamps follow
+  their room, and a dimmed room looks dimmer (the eye only partly adapts).
+- **Four window views.** The KL skyline from level 38, the rainforest from level 5 and the beach from
+  level 10 are new, rendered in Blender from scenes built for this project (the mountain is as
+  before). Each has a night version: the city's windows and street lamps come on through dusk, the
+  garden and pool lights in the forest, the resorts and fishing boats along the beach. The sun
+  glitters on the sea, following the real sun (from Type A's north-facing balcony you catch it on
+  mornings around June, low to the east-north-east). After sunset the landscape now fades with the
+  afterglow, so dusk has a blue hour.
+- **Photo Mode.** The camera button (or <kbd>P</kbd>) path-traces the current view: real bounced
+  light, soft shadows and reflections, cleaned by Intel's Open Image Denoise and saved as a PNG.
+  The walk view stays on screen while it measures the light; a cleaned-up image replaces it after 16
+  samples per pixel, again at 64, and the photo is done at 256. The view through the windows keeps
+  the brightness you saw while walking, so it doesn't wash out.
+
+The checkpoint for this phase is your walk-through: whether the views and night lighting feel real
+from inside the unit, whether the room lights and switches behave as you expect, and how Photo Mode
+looks and how long it takes on the Arc 130V.
+
+Phase 3 screenshots (rendered in software here, so softer and with simpler shadows than on your laptop):
+
+| | |
+|---|---|
+| Room lights | [KL skyline at dusk, Evening scene](docs/previews/phase3-01-city-dusk.jpg) · [Night, lights off](docs/previews/phase3-02-city-night-lights-off.jpg) · [Bedroom dimmed to 30%, 2700 K](docs/previews/phase3-03-bedroom-dimmed.jpg) · [Kitchen at 5000 K beside the warm dining light](docs/previews/phase3-04-kitchen-cool.jpg) |
+| Rainforest | [Morning, from the living room](docs/previews/phase3-05-rainforest-day.jpg) · [From the balcony](docs/previews/phase3-06-rainforest-balcony.jpg) · [Night](docs/previews/phase3-07-rainforest-night.jpg) |
+| Beach | [Morning, from the living room](docs/previews/phase3-08-beach-day.jpg) · [From the balcony](docs/previews/phase3-09-beach-balcony.jpg) · [Night](docs/previews/phase3-10-beach-night.jpg) · [Sun glitter, a June morning](docs/previews/phase3-11-beach-glitter.jpg) |
+| Photo Mode | [The walk view](docs/previews/phase3-12-walk-view.jpg) · [The same view in Photo Mode](docs/previews/phase3-13-photo.jpg) |
+| Interface | [Light switch](docs/previews/phase3-ui-switch.jpg) · [Lighting panel](docs/previews/phase3-ui-lighting.jpg) · [Window views](docs/previews/phase3-ui-views.jpg) · [Photo Mode bar](docs/previews/phase3-ui-photo.jpg) |
+
+Known gaps: Photo Mode does not reproduce tile joints and per-plank tone (the path tracer sees plain
+textures), needs WebGPU for the denoiser (Chrome or Edge on Windows have it), and its speed is
+untested on the Arc 130V; window views are flat images, so there is no parallax as you walk;
+furniture can overlap if you put it there; from the balcony end, a hairline can show across the black
+leather sofa.
+
+### Phase 2 (furniture)
+
+Type A is furnished in all five
 styles, 68 to 70 pieces each: sofas, beds, wardrobes, kitchen modules, bathroom fittings, lamps,
 curtains and plants, built in code at their catalogue sizes or taken from CC0 scans. Look at any
 piece to see its price, then pick it up, turn it, change its finish, swap it for another from the
 catalogue or hide it. The total in the top bar follows every change, and <kbd>Tab</kbd> shows the
-plan from above for rearranging. The checkpoint for this phase is your walk-through: whether the
-pieces feel the right size, each style reads as intended, the prices look plausible, and editing is
-easy on the laptop and the phone.
+plan from above for rearranging.
 
 Starting totals for Type A (estimates in MYR, furniture and fittings only, before renovation):
 
@@ -33,11 +72,6 @@ Phase 2 screenshots (rendered in software here, so softer and with simpler shado
 | Quiet Luxury | [Living room, June 4:30 pm](docs/previews/phase2-01-quiet-luxury-living.jpg) · [From the front door](docs/previews/phase2-02-quiet-luxury-entry.jpg) · [Evening, lamps on](docs/previews/phase2-03-quiet-luxury-night.jpg) · [Bedroom at night](docs/previews/phase2-04-quiet-luxury-bedroom-night.jpg) · [Bathroom, evening](docs/previews/phase2-05-quiet-luxury-bathroom.jpg) |
 | Other styles | [Muji living and dining](docs/previews/phase2-06-muji-living.jpg) · [Muji kitchen](docs/previews/phase2-07-muji-kitchen.jpg) · [Japanese living](docs/previews/phase2-08-japanese-living.jpg) · [Japanese bedroom](docs/previews/phase2-09-japanese-bedroom.jpg) · [Brutalist living](docs/previews/phase2-10-brutalist-living.jpg) · [Brutalist study](docs/previews/phase2-11-brutalist-study.jpg) · [Minimalist living](docs/previews/phase2-12-minimal-living.jpg) · [Minimalist bedroom](docs/previews/phase2-13-minimal-bedroom.jpg) |
 | Interface | [Price card](docs/previews/phase2-ui-hover.jpg) · [Swap, with price differences](docs/previews/phase2-ui-swap.jpg) · [Catalogue](docs/previews/phase2-ui-catalogue.jpg) · [Bill](docs/previews/phase2-ui-bill.jpg) · [Plan view](docs/previews/phase2-ui-plan.jpg) · [Phone](docs/previews/phase2-ui-phone.jpg) |
-
-Known gaps: furniture can overlap if you put it there (nothing stops it); room lights are all on or
-all off (per-room switches come in Phase 3), so bathrooms are dim by day; from the balcony end, a
-hairline can show across the black leather sofa (cause not found yet); the frame rate with furniture
-is untested on the Arc 130V.
 
 Phase 1 screenshots (the empty shell, before furniture):
 
@@ -99,9 +133,10 @@ For the smoothest 3D: keep the laptop plugged in and set Windows power mode to *
 |---|---|---|
 | Move | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrow keys; <kbd>Shift</kbd> to run | Left thumb: the joystick appears where you touch |
 | Look | Click the view to capture the mouse (<kbd>Esc</kbd> releases it), or drag | Drag with the right thumb |
-| Doors | <kbd>E</kbd> when "Open door" shows under the crosshair | Tap the "Open door" button |
+| Doors and light switches | <kbd>E</kbd> when "Open door" or "Switch on …" shows under the crosshair (switch plates are beside the doors, 1.3 m up) | Tap the button that appears |
 | Tape measure | <kbd>M</kbd> at the start point, <kbd>M</kbd> at the end point | Ruler button |
-| Lights | <kbd>L</kbd>, or Lighting → Room lights | Lighting tab |
+| Lights | <kbd>L</kbd> turns everything on or off; Lighting → Room lights for each room's switch, dimmer (drag the bar) and colour (tap the dot), and the scenes | Lighting tab |
+| Photo Mode | <kbd>P</kbd> or the camera button; **Save** writes a PNG, <kbd>Esc</kbd> or **Close** goes back | Settings → Photo Mode |
 | Time of day | <kbd>,</kbd> and <kbd>.</kbd> step 15 minutes; Lighting panel for time, month and presets | Lighting tab |
 | Panels | <kbd>1</kbd> Style · <kbd>2</kbd> Furniture · <kbd>3</kbd> Lighting · <kbd>4</kbd> Views · <kbd>Esc</kbd> closes | Tabs at the bottom |
 
@@ -145,6 +180,23 @@ exposure, look sensitivity, and "Back to the entrance".
 | `npm run build:mockup` | Regenerates `design/ui-mockup/index.html` |
 | `npm run typecheck` | TypeScript check |
 
+The window views are rendered with Blender 4.2 (not needed to run the app; the results are in
+`public/backdrops/`). Each view script builds its scene, renders a day pass and a night pass (the
+beach also a water mask), and `make_band.py` turns them into the band the app uses:
+
+```
+blender -b --factory-startup --python tools/views/city.py -- --out renders/city --mode day --width 6144 --samples 48
+blender -b --factory-startup --python tools/views/city.py -- --out renders/city --mode night --width 6144 --samples 32
+python tools/views/make_band.py renders/city public/backdrops/city --el-min -80 --el-max 14 --sky-glow 1 --night-peak 0.03
+python tools/views/thumb.py public/backdrops/city public/ui/views/city.jpg
+```
+
+The other views: `rainforest.py` (band: `--el-min -80 --el-max 50 --visibility 12000 --exposure 0.32
+--horizon-haze 0`; thumbnail: `--top 18`) and `beach.py` (also `--mode mask`; band: `--el-min -80
+--el-max 15 --visibility 45000 --exposure 0.32 --horizon-haze 0.5 --sea-shade 0.55 --sea-colour
+0.27,0.42,0.54`). The same exposure keeps the views lit alike. On a 4-core CPU at 6144 px the rainforest takes about 80 minutes for both passes, the city
+and the beach about half an hour each.
+
 ## Layout
 
 ```
@@ -157,8 +209,10 @@ src/ui/            interface (top bar, dock, panels, minimap, touch controls) an
 src/state/         app state
 src/catalogue/     materials, style packs, price bands and catalogue items
 scripts/           asset download, checks, and generators for docs/ and design/
-tools/             make_backdrop.py: turns a CC0 panorama into a window-view band
-public/backdrops/  window views (mountain so far)
+tools/             make_backdrop.py: turns a CC0 panorama into a window-view band;
+                   views/: Blender scenes for the city, rainforest and beach views, and their tools
+public/backdrops/  the four window views: band, night lights, water mask
+public/oidn/       Open Image Denoise weights for Photo Mode
 design/            mood boards and interface mockup
 docs/              rebuilt plans, pricing, catalogue CSV, previews, reference sheets
 ```
@@ -167,6 +221,9 @@ docs/              rebuilt plans, pricing, catalogue CSV, previews, reference sh
 
 - Textures, 3D models and panoramas: [Poly Haven](https://polyhaven.com) and [ambientCG](https://ambientcg.com), both CC0.
   The mountain view is built from Poly Haven's "Drakensberg Solitary Mountain" panorama.
+- The city, rainforest and beach views are rendered in [Blender](https://www.blender.org) from scenes built in code here (`tools/views`).
+- Photo Mode: [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer) (MIT), [oidn-web](https://github.com/pissang/oidn-web) (MIT) with
+  [Open Image Denoise](https://github.com/RenderKit/oidn) weights (Apache 2.0, `public/oidn/LICENSE.txt`).
 - Icons: [Lucide](https://lucide.dev) (ISC). Font: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) (SIL OFL).
 - `docs/reference/` holds the developer's sales and CAD sheets, kept as reference for this private prototype.
 - All furniture products and brands are invented. Their prices are placed in bands taken from Malaysian retail listings; see `docs/pricing.md`.
