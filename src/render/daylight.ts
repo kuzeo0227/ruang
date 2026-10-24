@@ -69,8 +69,10 @@ const reduceCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 export function captureApertures(gl: THREE.WebGLRenderer, scene: THREE.Scene, apertures: Aperture[]) {
   const prevTarget = gl.getRenderTarget();
   const sunDisc = skyMaterial.uniforms.sunDiscScale!.value as number;
-  // The sun itself arrives as the shadowed directional light, so keep it out of the window glow.
+  // The sun itself arrives as the shadowed directional light, so keep it out of the window glow,
+  // and let the night sky in at a realistic level.
   skyMaterial.uniforms.sunDiscScale!.value = 0;
+  skyMaterial.uniforms.nightLight!.value = 0.5;
   const c = new THREE.Vector3();
   const n = new THREE.Vector3();
   for (let i = 0; i < apertures.length && i < MAX_APERTURES; i++) {
@@ -97,7 +99,50 @@ export function captureApertures(gl: THREE.WebGLRenderer, scene: THREE.Scene, ap
   }
   apertureTarget.scissorTest = false;
   skyMaterial.uniforms.sunDiscScale!.value = sunDisc;
+  skyMaterial.uniforms.nightLight!.value = 1;
   gl.setRenderTarget(prevTarget);
+}
+
+/** Diagnostics: what the daylight camera of opening `i` sees, as a 16 × 16 grid of linear RGB. */
+export function debugApertureView(gl: THREE.WebGLRenderer, scene: THREE.Scene, a: Aperture): number[][] {
+  const size = 64;
+  const rt = new THREE.WebGLRenderTarget(size, size, { type: THREE.FloatType });
+  const n = new THREE.Vector3(...a.normal);
+  const c = new THREE.Vector3(...a.origin)
+    .addScaledVector(new THREE.Vector3(...a.u), 0.5)
+    .addScaledVector(new THREE.Vector3(...a.v), 0.5)
+    .addScaledVector(n, -(a.depth + 0.08));
+  viewCam.position.copy(c);
+  viewCam.up.set(0, 1, 0);
+  viewCam.lookAt(c.x - n.x, c.y, c.z - n.z);
+  viewCam.updateMatrixWorld();
+  const prev = gl.getRenderTarget();
+  const sunDisc = skyMaterial.uniforms.sunDiscScale!.value as number;
+  skyMaterial.uniforms.sunDiscScale!.value = 0;
+  skyMaterial.uniforms.nightLight!.value = 0.5;
+  gl.setRenderTarget(rt);
+  gl.clear();
+  gl.render(scene, viewCam);
+  skyMaterial.uniforms.sunDiscScale!.value = sunDisc;
+  skyMaterial.uniforms.nightLight!.value = 1;
+  const buf = new Float32Array(size * size * 4);
+  gl.readRenderTargetPixels(rt, 0, 0, size, size, buf);
+  gl.setRenderTarget(prev);
+  rt.dispose();
+  const out: number[][] = [];
+  for (let gy = 15; gy >= 0; gy--) {
+    const row: number[] = [];
+    for (let gx = 0; gx < 16; gx++) {
+      let sum = 0;
+      for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) {
+        const i = ((gy * 4 + y) * size + gx * 4 + x) * 4;
+        sum += 0.2126 * buf[i]! + 0.7152 * buf[i + 1]! + 0.0722 * buf[i + 2]!;
+      }
+      row.push(+(sum / 16 * 10000).toFixed(1));
+    }
+    out.push(row);
+  }
+  return out;
 }
 
 /** Black cards over every opening, seen only by the probes' bounce-light capture. */

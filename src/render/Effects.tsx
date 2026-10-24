@@ -17,7 +17,10 @@ const METER = 64;
 
 const fullscreenVertex = /* glsl */ `void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 
-/** Centre-weighted log luminance of the frame, 64 × 64, mipmapped down to the average. */
+/**
+ * Centre-weighted log luminance of the frame, 64 × 64, mipmapped down to the average; also the
+ * average colour cast (log red/green and blue/green), for white balance under lamplight.
+ */
 const meterMaterial = new THREE.ShaderMaterial({
   uniforms: { tInput: { value: null as THREE.Texture | null } },
   vertexShader: fullscreenVertex,
@@ -26,17 +29,22 @@ const meterMaterial = new THREE.ShaderMaterial({
     void main() {
       vec2 uv0 = (gl_FragCoord.xy - 0.5) / ${METER}.0;
       float sum = 0.0;
+      vec2 tint = vec2(0.0);
       for (int y = 0; y < 3; y++) {
         for (int x = 0; x < 3; x++) {
           vec2 uv = uv0 + (vec2(float(x), float(y)) + 0.5) / (${METER}.0 * 3.0);
           vec3 c = texture2D(tInput, uv).rgb;
           float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
           sum += log2(clamp(l, 1e-4, 64.0));
+          // Black pixels say nothing about the colour of the light.
+          float s = smoothstep(1e-5, 1e-4, l);
+          vec3 cc = max(c, vec3(1e-6));
+          tint += s * vec2(log2(cc.r / cc.g), log2(cc.b / cc.g));
         }
       }
       vec2 d = (gl_FragCoord.xy / ${METER}.0) - 0.5;
       float w = mix(0.35, 1.0, exp(-dot(d, d) * 6.0));
-      gl_FragColor = vec4(sum / 9.0 * w, w, 0.0, 1.0);
+      gl_FragColor = vec4(sum / 9.0 * w, w, tint / 9.0 * w);
     }`,
   depthTest: false,
   depthWrite: false,
@@ -57,12 +65,12 @@ const adaptMaterial = new THREE.ShaderMaterial({
     uniform float dt;
     uniform float reset;
     void main() {
-      vec2 m = textureLod(tMeter, vec2(0.5), 10.0).rg;
-      float current = m.x / max(m.y, 1e-4);
-      float prev = texture2D(tPrev, vec2(0.5)).r;
-      float rate = current > prev ? 2.8 : 1.4;
-      float next = reset > 0.5 ? current : prev + (current - prev) * (1.0 - exp(-dt * rate));
-      gl_FragColor = vec4(next, 0.0, 0.0, 1.0);
+      vec4 m = textureLod(tMeter, vec2(0.5), 10.0);
+      vec3 current = vec3(m.x, m.z, m.w) / max(m.y, 1e-4);
+      vec3 prev = texture2D(tPrev, vec2(0.5)).rgb;
+      float rate = current.x > prev.x ? 2.8 : 1.4;
+      vec3 next = reset > 0.5 ? current : prev + (current - prev) * (1.0 - exp(-dt * rate));
+      gl_FragColor = vec4(next, 1.0);
     }`,
   depthTest: false,
   depthWrite: false,
@@ -83,14 +91,14 @@ const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 class ExposureEffectImpl extends Effect {
   private meter = new THREE.WebGLRenderTarget(METER, METER, {
     type: THREE.HalfFloatType,
-    format: THREE.RGFormat,
+    format: THREE.RGBAFormat,
     minFilter: THREE.LinearMipmapLinearFilter,
     magFilter: THREE.LinearFilter,
     generateMipmaps: true,
     depthBuffer: false,
   });
   private adapted = [0, 1].map(
-    () => new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, format: THREE.RedFormat, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: false }),
+    () => new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, format: THREE.RGBAFormat, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: false }),
   );
   private current = 0;
   private fresh = true;
@@ -108,7 +116,8 @@ class ExposureEffectImpl extends Effect {
       uniform float daylight;
       uniform vec3 nightWB;
       void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-        float avg = exp2(texture2D(tAdapted, vec2(0.5)).r);
+        vec3 adapted = texture2D(tAdapted, vec2(0.5)).rgb;
+        float avg = exp2(adapted.x);
         float exposure = clamp(exposureParams.x / avg, exposureParams.y, exposureParams.z) * bias;
         vec3 d = vec3(0.0);
         for (int i = 0; i < ${MAX_APERTURES}; i++) {
@@ -117,7 +126,11 @@ class ExposureEffectImpl extends Effect {
         }
         float lum = dot(d, vec3(0.2126, 0.7152, 0.0722));
         vec3 dayWB = lum > 1e-5 ? mix(vec3(1.0), d.g / max(d, vec3(1e-5)), 0.55) : vec3(1.0);
-        vec3 wb = mix(nightWB, dayWB, daylight);
+        // Under lamplight: take out most of the warm cast the view actually has (like a camera's
+        // auto white balance), never more than the lamps' own colour calls for, never cooling.
+        vec3 lampWB = vec3(exp2(-max(adapted.y, 0.0) * 0.6), 1.0, exp2(-min(adapted.z, 0.0) * 0.6));
+        lampWB = clamp(lampWB, min(nightWB, vec3(1.0)), max(nightWB, vec3(1.0)));
+        vec3 wb = mix(lampWB, dayWB, daylight);
         wb /= dot(wb, vec3(0.2126, 0.7152, 0.0722));
         outputColor = vec4(inputColor.rgb * exposure * wb, inputColor.a);
       }`,

@@ -61,6 +61,9 @@ uniform float mieDirectionalG;
 uniform float skyScale;
 uniform float sunDiscScale;
 uniform float night;
+// How much of the night sky reaches the room (the sky in view is drawn brighter than a real
+// night sky so the window doesn't read as a black hole; the light it sends in stays realistic).
+uniform float nightLight;
 uniform float twilight;
 uniform float cloudCoverage;
 uniform float cloudScale;
@@ -132,7 +135,8 @@ vec3 skyRadiance(vec3 direction, out vec3 Fex) {
   vec3 Lin = pow(vSunE * ((betaRTheta + betaMTheta) / (vBetaR + vBetaM)) * (1.0 - Fex), vec3(1.5));
   Lin *= mix(vec3(1.0), pow(vSunE * ((betaRTheta + betaMTheta) / (vBetaR + vBetaM)) * Fex, vec3(0.5)), clamp(pow(1.0 - vSunDirection.y, 5.0), 0.0, 1.0));
   vec3 L0 = vec3(0.1) * Fex;
-  return (Lin + L0) * 0.04 + vec3(0.0, 0.0003, 0.00075);
+  // The model's ambient floor doesn't depend on the sun, so fade it out with the night.
+  return Lin * 0.04 + (L0 * 0.04 + vec3(0.0, 0.0003, 0.00075)) * (1.0 - night);
 }
 
 void main() {
@@ -181,7 +185,7 @@ void main() {
   float star = step(0.9975, hash13(starCell)) * smoothstep(0.0, 0.15, up);
   float twinkle = 0.6 + 0.4 * hash13(starCell + 7.0);
   nightSky += star * twinkle * 0.012;
-  sky = sky * skyScale + nightSky * night;
+  sky = sky * skyScale + nightSky * night * nightLight;
 
   vec3 color = sky;
   if (hasLandscape > 0.5) {
@@ -199,10 +203,10 @@ void main() {
       mask = el > elMax ? 0.0 : t.a;
       land = mix(land, srgbToLinear(groundColor), 1.0 - smoothstep(elMin, elMin + 8.0, el));
     }
-    land *= landLight;
+    land *= landLight * mix(1.0, nightLight, night);
     // Distant haze takes on the current sky colour near the horizon.
     float haze = hazeAmount * (1.0 - smoothstep(0.0, 6.0, abs(el))) ;
-    vec3 horizonSky = skyRadiance(normalize(vec3(direction.x, 0.02, direction.z)), Fex) * skyScale + nightSky * night;
+    vec3 horizonSky = skyRadiance(normalize(vec3(direction.x, 0.02, direction.z)), Fex) * skyScale + nightSky * night * nightLight;
     land = mix(land, horizonSky, haze);
     color = mix(sky, land, mask);
   }
@@ -223,6 +227,7 @@ export function createSkyMaterial(): THREE.ShaderMaterial {
       skyScale: { value: 0.25 },
       sunDiscScale: { value: 0.25 },
       night: { value: 0 },
+      nightLight: { value: 1 },
       cloudCoverage: { value: 0.32 },
       cloudScale: { value: 0.0002 },
       time: { value: 0 },

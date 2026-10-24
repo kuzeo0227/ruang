@@ -388,7 +388,7 @@ function ExposureControl() {
   const styleId = useStore((s) => s.style);
   const kelvin = STYLES[styleId].lightKelvin;
   useEffect(() => {
-    // Under downlights, correct three quarters of the way (in log terms) so evenings stay warm
+    // The most the white balance may correct under downlights: three quarters of the way (in log terms), so evenings stay warm
     // white, the way a camera's auto white balance leaves them.
     const c = kelvinColor(kelvin);
     const wb = registry.whiteBalance.night;

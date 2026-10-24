@@ -4,7 +4,7 @@
 
 import * as THREE from 'three';
 import { STYLE_ORDER, type StyleId } from './catalogue/styles';
-import { BLOCKER_LAYER, apertureTarget, lightDebug } from './render/daylight';
+import { BLOCKER_LAYER, apertureTarget, debugApertureView, lightDebug } from './render/daylight';
 import { activeCameraRef, controls } from './render/Player';
 import { registry } from './render/registry';
 import { useLayout } from './state/layout';
@@ -91,6 +91,15 @@ export function installDebugHook() {
         else cam?.layers.disable(BLOCKER_LAYER);
       },
       /** True once textures are loaded and the reflection probes have settled. */
+      /** What the daylight camera of an opening sees (luminance × 10⁴ on a 16 × 16 grid). */
+      apertureView(id: string) {
+        const gl = registry.gl;
+        const shell = registry.shell;
+        const scene = registry.furnitureRoot?.parent;
+        const a = shell?.apertures.find((x) => x.id === id);
+        if (!gl || !a || !(scene instanceof THREE.Scene)) return null;
+        return debugApertureView(gl, scene, a);
+      },
       /** Screen pixel of a world point in the current view. */
       worldToScreen(x: number, y: number, z: number) {
         const cam = registry.planCamera ?? activeCameraRef();

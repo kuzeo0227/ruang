@@ -76,7 +76,27 @@ For the smoothest 3D: keep the laptop plugged in and set Windows power mode to *
 | Tape measure | <kbd>M</kbd> at the start point, <kbd>M</kbd> at the end point | Ruler button |
 | Lights | <kbd>L</kbd>, or Lighting → Room lights | Lighting tab |
 | Time of day | <kbd>,</kbd> and <kbd>.</kbd> step 15 minutes; Lighting panel for time, month and presets | Lighting tab |
-| Panels | <kbd>1</kbd> Style · <kbd>3</kbd> Lighting · <kbd>4</kbd> Views · <kbd>Esc</kbd> closes | Tabs at the bottom |
+| Panels | <kbd>1</kbd> Style · <kbd>2</kbd> Furniture · <kbd>3</kbd> Lighting · <kbd>4</kbd> Views · <kbd>Esc</kbd> closes | Tabs at the bottom |
+
+### Furniture
+
+Look at any piece: its price card appears beside it. Every piece can be moved, including kitchen
+modules, wardrobes and bathroom fittings.
+
+| | Laptop | Phone |
+|---|---|---|
+| Pick up / put down | <kbd>E</kbd> (it follows your view: along the floor, onto table tops, flat on walls) | Tap the piece, then **Move**, then **Put down** |
+| Rotate 45° | <kbd>R</kbd> (<kbd>Shift</kbd>+<kbd>R</kbd> the other way) | **Rotate** |
+| Next finish | <kbd>F</kbd>, or click a swatch on the card | **Finish** |
+| Swap for another piece | <kbd>C</kbd> opens the catalogue with prices compared to yours | **Swap** |
+| Hide (left off the bill) / remove | <kbd>H</kbd> / <kbd>Delete</kbd> | **Hide** / **Remove** |
+| Undo / redo | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>, or the Undo button on the message | Undo on the message |
+| Add a piece | Furniture panel → catalogue → click a card, then put it down | Same |
+| The bill | Click the green total in the top bar | Same |
+| Plan view | <kbd>Tab</kbd> or the Walk / Plan switch: drag pieces, wheel to zoom, drag the floor to pan, double-click to walk there | Walk / Plan switch; pinch to zoom |
+
+Each style keeps its own layout in the browser, so edits survive a reload. The bill has
+**Reset to the … layout** to start again.
 
 Settings also has field of view, eye height (set it to your own: about your height minus 12 cm),
 exposure, look sensitivity, and "Back to the entrance".
@@ -90,6 +110,8 @@ exposure, look sensitivity, and "Back to the entrance".
 | `npm run fetch:assets` | Downloads the CC0 textures and models into `public/assets/` |
 | `npm run check:plans` | Checks the rebuilt floor plans against the CAD area and daylighting tables |
 | `npm run check:shell` | Builds the 3D shell of every unit and checks doorways, probes, spawn point and daylight openings |
+| `npm run check:furniture` | Builds every code-made piece in every style and finish and checks its geometry and size |
+| `npm run check:layouts` | Checks each style's starting layout in every unit: inside the walls, no overlaps, door swings and the balcony door clear |
 | `npm run render:plans` | Regenerates the SVG plans and `docs/plans/index.html` |
 | `npm run export:catalogue` | Validates the catalogue and writes `docs/catalogue.csv` and `docs/pricing.md` |
 | `npm run build:moodboards` | Regenerates `design/moodboards/index.html` |
@@ -101,7 +123,9 @@ exposure, look sensitivity, and "Back to the entrance".
 ```
 src/plan/          floor-plan data model; one generator builds Types A, B and B1
 src/shell/         3D shell from the plan: walls, openings, joinery, collision, lighting zones
-src/render/        canvas, materials, sun and sky, daylight, probes, post-processing, walking
+src/render/        canvas, materials, sun and sky, daylight, probes, post-processing, walking,
+                   furniture in the scene, editing, plan view, catalogue thumbnails
+src/furniture/     placements and edits, code-built furniture generators, default layouts
 src/ui/            interface (top bar, dock, panels, minimap, touch controls) and design tokens
 src/state/         app state
 src/catalogue/     materials, style packs, price bands and catalogue items

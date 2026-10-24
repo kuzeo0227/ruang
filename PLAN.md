@@ -71,7 +71,27 @@ and on a phone over the same Wi-Fi. It is not a buyer-facing product.
 - Camera: auto exposure that adapts like an eye, white balance (neutral by day, warm-white under
   downlights), AgX tone mapping, N8AO ambient occlusion and bloom (medium and high quality), SMAA, vignette.
 - Quality presets cap the internal resolution (about 1080p on medium) for the Arc 130V.
-- Planned for later phases: three-mesh-bvh for furniture hits, lz-string for share links, three-gpu-pathtracer for Photo Mode.
+
+## Architecture (added in Phase 2)
+
+- Furniture: 131 pieces are built in code (`src/furniture/gen`), per style, at their catalogue size with
+  UVs in metres so wood grain and weave come out at real scale; 17 are Poly Haven scans, turned and
+  scaled to their catalogue size (`src/render/models.ts`). `npm run check:furniture` builds every piece
+  in every style and finish.
+- Each piece is lit by its room with the shell's own shader: window light, bounce, reflections,
+  downlights. Lamps (floor, table, pendant, desk, fan lights) are point lights in the same shaders,
+  up to four per room, and their shades glow when the lights are on.
+- Window light is shadowed twice: by the building (sharp, so no light leaks between rooms) and by the
+  furniture (blurrier where the gap to the surface is wider, and never the whole opening).
+- Starting layouts (`src/furniture/layouts`) are written against each room's wall faces, door swings
+  and openings, so the same recipe fits Types A, B and B1. `npm run check:layouts` checks them.
+- Editing state is a list of placements per unit and style (`src/state/layout.ts`), saved in the
+  browser; every edit is one undo step. Hit tests use three-mesh-bvh.
+- Plan mode is the same scene from an orthographic camera with the ceilings hidden; shadows and probes
+  wait until walking resumes.
+- Night white balance follows the colour of the light actually in view (like a camera), within the
+  lamps' colour, so mixed lamp and window light stays warm-white.
+- Planned for later phases: lz-string for share links, three-gpu-pathtracer for Photo Mode.
 
 ## Phases
 
@@ -86,13 +106,17 @@ and on a phone over the same Wi-Fi. It is not a buyer-facing product.
      Auto/On/Off room lights, a tape measure, doors that open and close, quality presets and diagnostics.
    - Known gaps: frame rate is untested on real hardware (this environment has no GPU); the B1 bay window
      does not yet let in daylight (Phase 4); window shadows are deliberately soft approximations.
-2. **Furniture**:
+2. **Furniture** (done, awaiting your walk-through):
    - Parametric generators and the scanned models.
-   - Default layouts per style.
+   - Default layouts per style (68 to 70 pieces each in Type A; Minimalist RM63,707 to Quiet Luxury RM188,715).
    - Hover prices.
    - Pick up / rotate / hide / swap / finish in walk mode.
    - Plan mode.
    - Undo, and the running total.
+   - Also built: the catalogue with 3D thumbnails, search and swap-with-price-difference; the bill by
+     room; lamp light at night; touch selection and action sheet; kitchen base and shower screen widths.
+   - Known gaps: the B1 bay window still lets in no daylight; furniture can overlap if you put it
+     there (nothing stops it); frame rate with furniture is untested on the Arc 130V.
 3. **Light and views**:
    - Time-of-day and month sliders.
    - Per-room switches, dimmers and colour temperature.
