@@ -99,7 +99,7 @@ def terrain(x, y):
     out = np.clip(r - e, 0, None)
     # The valley: a steep bank just beyond the garden (so the trees on it stand below the eye),
     # then a floor that falls gently and climbs into far hills.
-    drop = -(42 * smoothstep(0, 30, out) + 22 * smoothstep(25, 260, out)) * vw
+    drop = -(30 * smoothstep(0, 13, out) + 18 * smoothstep(10, 60, out) + 20 * smoothstep(50, 300, out)) * vw
     climb = (1 - vw) * (out * 0.09 + 25 * smoothstep(60, 600, out))
     hills = 260 * smoothstep(900, 4000, r) * (0.55 + 0.45 * undulation(x, y, 2600))
     rough = 6 * undulation(x, y, 140) * smoothstep(0, 40, out)
@@ -200,7 +200,7 @@ def bark_material(name, base, light, dark, scale=1.0):
 
 BARK = bark_material('bark', C(0.32, 0.29, 0.24), C(0.5, 0.48, 0.42), C(0.12, 0.11, 0.08))
 BARK_DARK = bark_material('bark_dark', C(0.16, 0.13, 0.1), C(0.33, 0.33, 0.27), C(0.06, 0.05, 0.035))
-PALM_TRUNK = bark_material('palm_trunk', C(0.26, 0.24, 0.21), C(0.34, 0.33, 0.3), C(0.13, 0.12, 0.1), scale=3.0)
+PALM_TRUNK = bark_material('palm_trunk', C(0.17, 0.155, 0.13), C(0.24, 0.23, 0.2), C(0.08, 0.07, 0.06), scale=3.0)
 BAMBOO = kit.simple_mat('bamboo', C(0.22, 0.28, 0.06), rough=0.35, spec=0.6)
 
 
@@ -227,7 +227,8 @@ def foliage_material(name, coords, cell, stops, bump_strength=0.8):
     noise.inputs['Roughness'].default_value = 0.65
     nt.links.new(vec, noise.inputs['Vector'])
     edge = kit.math_node(nt, 'POWER', kit.math_node(nt, 'MULTIPLY', vor.outputs['Distance'], 2.2, clamp=True), 0.6)
-    tone = kit.math_node(nt, 'ADD', kit.math_node(nt, 'MULTIPLY', vor2.outputs['Color'], 0.7), kit.math_node(nt, 'MULTIPLY', noise.outputs['Fac'], 0.3))
+    tone = kit.math_node(nt, 'ADD', kit.math_node(nt, 'MULTIPLY', vor2.outputs['Color'], 0.35), kit.math_node(nt, 'MULTIPLY', noise.outputs['Fac'], 0.25))
+    tone = kit.math_node(nt, 'ADD', tone, kit.math_node(nt, 'MULTIPLY', info.outputs['Random'], 0.45))
     col = ramp(nt, tone, stops)
     col = kit.mix_rgb(nt, kit.math_node(nt, 'SUBTRACT', 1.0, edge), col, C(0.005, 0.012, 0.004))
     height = kit.math_node(nt, 'ADD', edge, kit.math_node(nt, 'MULTIPLY', noise.outputs['Fac'], 0.5))
@@ -405,7 +406,6 @@ def lerp(a, b, t):
 
 
 TUBES = {'bark': kit.TubeBuilder(), 'bark_dark': kit.TubeBuilder(), 'palm': kit.TubeBuilder(), 'bamboo': kit.TubeBuilder()}
-CORES = []  # (centre, radii, tone) dark crown cores so gaps show shade, not sky
 
 
 def curve(p0, p1, bend, n=6):
@@ -438,10 +438,10 @@ def buttresses(x, y, z, r0, h, r, tb):
 # Archetypes: height, trunk radius, crown radius, clusters, where the crown starts (share of the
 # height), cluster flattening, leaf density, buttress chance.
 ARCHETYPES = {
-    'emergent': dict(h=(42, 56), r0=(0.55, 0.8), crown=(10, 14), clusters=(11, 16), base=(0.72, 0.8), squash=0.55, density=1.7, buttress=1.0),
-    'canopy': dict(h=(26, 38), r0=(0.3, 0.5), crown=(6, 9), clusters=(9, 14), base=(0.5, 0.62), squash=0.75, density=1.9, buttress=0.4),
-    'subcanopy': dict(h=(14, 24), r0=(0.16, 0.3), crown=(3.5, 6), clusters=(6, 10), base=(0.4, 0.55), squash=0.8, density=2.1, buttress=0.0),
-    'understorey': dict(h=(5, 12), r0=(0.07, 0.15), crown=(2.0, 3.5), clusters=(3, 6), base=(0.3, 0.5), squash=0.85, density=2.3, buttress=0.0),
+    'emergent': dict(h=(42, 56), r0=(0.55, 0.8), crown=(10, 14), clusters=(12, 18), base=(0.62, 0.72), squash=0.7, density=2.2, buttress=1.0),
+    'canopy': dict(h=(26, 38), r0=(0.3, 0.5), crown=(6, 9), clusters=(9, 14), base=(0.5, 0.62), squash=0.75, density=2.4, buttress=0.4),
+    'subcanopy': dict(h=(14, 24), r0=(0.16, 0.3), crown=(3.5, 6), clusters=(6, 10), base=(0.4, 0.55), squash=0.8, density=2.6, buttress=0.0),
+    'understorey': dict(h=(5, 12), r0=(0.07, 0.15), crown=(2.0, 3.5), clusters=(3, 6), base=(0.3, 0.5), squash=0.85, density=2.8, buttress=0.0),
 }
 
 
@@ -453,7 +453,7 @@ def tree(x, y, kind, r):
     H = r.uniform(*a['h'])
     # Trees right at the top of the valley bank are young and short (it was cleared for the garden).
     out = math.hypot(x, y) - float(edge_radius(bearing_of(x, y)))
-    H *= 1 - 0.45 * float(valley_weight(bearing_of(x, y))) * max(0.0, 1 - out / 30)
+    H *= 1 - 0.55 * float(valley_weight(bearing_of(x, y))) * max(0.0, 1 - out / 40)
     r0 = r.uniform(*a['r0'])
     crown_r = r.uniform(*a['crown'])
     clusters = int(r.integers(*a['clusters']))
@@ -488,7 +488,6 @@ def tree(x, y, kind, r):
         br = curve(start, end, [0, 0, r.uniform(0.3, 1.5)], 5)
         tb.tube(br, np.linspace(max(0.04, r0 * 0.4), 0.04, len(br)), sides=6 if r0 > 0.2 else 4)
         crown_cluster((cx, cy, cz), radii, a['density'], kinds, tone, r)
-        CORES.append(((cx, cy, cz), tuple(v * 0.72 for v in radii), tone))
     return H
 
 
@@ -515,7 +514,7 @@ def reach(x, y):
 
 # Layers, tallest first: spacing within a layer, and how deep into the forest the layer still
 # shows (lower layers are hidden under the canopy further in, except down the valley slope).
-LAYERS = (('emergent', 30, 0.6, 1e9), ('canopy', 10, 0.95, 1e9), ('subcanopy', 7, 0.85, 45), ('understorey', 4.2, 0.85, 22))
+LAYERS = (('emergent', 30, 0.45, 1e9), ('canopy', 10, 0.95, 1e9), ('subcanopy', 7, 0.85, 45), ('understorey', 4.2, 0.85, 22))
 trunks = []  # every trunk so far, so no two stand in the same spot
 counts = {}
 for kind, spacing, keep, max_depth in LAYERS:
@@ -590,7 +589,7 @@ def frond(name, length, n_leaflets, leaflet_len, leaflet_w, arch, droop, mat, se
 
 F = []
 for k in range(3):
-    F.append(frond(f'fr_{len(F):02d}', 3.6, 34, 0.75, 0.045, 0.35, 0.55, LEAF_PALM, 50 + k))  # coconut / royal palm
+    F.append(frond(f'fr_{len(F):02d}', 4.6, 44, 0.95, 0.06, 0.35, 0.6, LEAF_PALM, 50 + k))  # coconut / royal palm
 for k in range(2):
     F.append(frond(f'fr_{len(F):02d}', 2.4, 26, 0.32, 0.05, 0.3, 0.4, LEAF_FINE, 60 + k))  # tree fern
 for k in range(2):
@@ -658,8 +657,7 @@ def bamboo_clump(x, y, r):
 def shrub(x, y, r, size, kinds=None, tone=None):
     z = float(terrain(x, y))
     t = r.uniform(0, 0.6) if tone is None else tone
-    crown_cluster((x, y, z + size * 0.55), (size, size * r.uniform(0.8, 1.2), size * 0.7), 3.2, kinds or SHRUB, t, r, scale=0.75, lump=0.45)
-    CORES.append(((x, y, z + size * 0.5), (size * 0.7, size * 0.7, size * 0.5), t))
+    crown_cluster((x, y, z + size * 0.55), (size, size * r.uniform(0.8, 1.2), size * 0.7), 9.0, kinds or SHRUB, t, r, scale=0.5, lump=0.6)
 
 
 # Along the edge, a band of mixed edge growth.
@@ -709,7 +707,7 @@ def garden_raster():
     stripes = 0.5 + 0.5 * np.sin((X * 0.94 + Y * 0.34) * math.pi / 1.6)
     patch = 0.5 + 0.5 * undulation(X, Y, 9.0) * 0.6
     # Linear albedo: mown grass reflects about a tenth of green light.
-    grass = np.stack([0.045 + 0.012 * stripes + 0.015 * patch, 0.095 + 0.018 * stripes + 0.02 * patch, 0.028 + 0.006 * stripes], -1)
+    grass = np.stack([0.045 + 0.004 * stripes + 0.015 * patch, 0.095 + 0.007 * stripes + 0.02 * patch, 0.028 + 0.002 * stripes], -1)
     grain = rngl.normal(0, 0.006, (n, n, 1))
     img[:] = grass + grain
     litter = np.stack([0.07 + 0.03 * patch, 0.05 + 0.02 * patch, 0.03 + 0.01 * patch], -1)
@@ -834,6 +832,20 @@ basin.append([to_world(x_, y_, -1.4) for x_, y_ in corners])
 kit.mesh_object('pool_basin', [v for f in basin for v in f], [tuple(range(4 * k, 4 * k + 4)) for k in range(len(basin))], tile)
 kit.mesh_object('pool_water', [to_world(x_, y_, -0.12) for x_, y_ in corners], [(0, 1, 2, 3)], water_m)
 
+# A railing along the top of the valley bank.
+rail_m = kit.simple_mat('railing', C(0.05, 0.05, 0.05), 0.4, metal=0.6)
+rb = kit.MeshBuilder()
+for b in np.arange(VALLEY_BEARING - 60, VALLEY_BEARING + 60, 0.8):
+    if valley_weight(b) < 0.35:
+        continue
+    e = float(edge_radius(b)) - 0.6
+    x0, y0 = kit.polar(b, e)
+    x1, y1 = kit.polar(b + 0.8, e)
+    rb.quad((x0, y0, 1.0), (x1, y1, 1.0), (x1, y1, 1.06), (x0, y0, 1.06))
+    if int(round(b / 0.8)) % 3 == 0:
+        rb.box(x0 - 0.03, y0 - 0.03, 0.0, x0 + 0.03, y0 + 0.03, 1.03)
+rb.build('railing', rail_m)
+
 # Garden planting: shrub beds, frangipani, palms.
 for b in np.arange(0, 360, 4.5):
     rr = float(edge_radius(b)) - rng.uniform(2.5, 5.5)
@@ -871,55 +883,59 @@ for x, y in ((3.0, 32.0), (22.0, 34.0), (-8.0, 28.0), (-30.0, 12.0), (30.0, -10.
 SHELLS = kit.hidden_collection('shells')
 
 
-def shell_mesh(name, seed, squash):
+def cauliflower_mesh(name, seed, squash):
+    """A distant crown: dozens of leafy lumps over a dome, so its outline is ragged and it shades itself."""
     r = np.random.default_rng(seed)
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3, radius=1.0)
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=1.0)
     ico = bpy.context.object
-    v = np.array([p.co[:] for p in ico.data.vertices])
-    f = [tuple(p.vertices) for p in ico.data.polygons]
+    bv = np.array([p.co[:] for p in ico.data.vertices])
+    bf = [tuple(p.vertices) for p in ico.data.polygons]
     bpy.data.objects.remove(ico)
-    # Lumps: a few bulges, flattened underneath.
-    bumps = r.normal(size=(7, 3))
-    bumps /= np.linalg.norm(bumps, axis=1, keepdims=True)
-    k = np.ones(len(v))
-    for bvec in bumps:
-        k += 0.18 * np.maximum(0, v @ bvec) ** 6
-    v = v * k[:, None]
-    v[:, 2] = np.where(v[:, 2] < 0, v[:, 2] * 0.35, v[:, 2]) * squash
-    return kit.mesh_object(name, v, f, CROWN_SHELL, smooth=True, collection=SHELLS)
+    verts, faces = [], []
+
+    def lump(c, rad):
+        n0 = len(verts)
+        v = bv * rad * (1 + r.uniform(-0.12, 0.12, (len(bv), 1))) + c
+        verts.extend(v.tolist())
+        faces.extend(tuple(n0 + i for i in f) for f in bf)
+
+    lump(np.array([0, 0, 0.1]), 0.72)  # the body
+    n = int(r.integers(45, 70))
+    d = r.normal(size=(n, 3))
+    d[:, 2] = np.abs(d[:, 2]) * 1.2 - 0.25
+    d /= np.linalg.norm(d, axis=1, keepdims=True)
+    for k in range(n):
+        lump(d[k] * r.uniform(0.62, 0.85) + np.array([0, 0, 0.1]), r.uniform(0.17, 0.33))
+    v = np.array(verts)
+    v[:, 2] = np.where(v[:, 2] < 0, v[:, 2] * 0.5, v[:, 2]) * squash
+    return kit.mesh_object(name, v, faces, CROWN_SHELL, smooth=True, collection=SHELLS)
 
 
-for k in range(5):
-    shell_mesh(f'sh_{k:02d}', 90 + k, (0.55, 0.65, 0.5, 0.7, 0.6)[k])
-far = jittered(8.5, 1400, jitter=0.45)
+for k in range(6):
+    cauliflower_mesh(f'sh_{k:02d}', 90 + k, (0.8, 0.9, 0.75, 0.95, 0.85, 0.7)[k])
+# A carpet of crowns: close-packed down the valley and over the hills beyond it, sparse elsewhere
+# (hidden behind the near forest; it only fills the gaps).
+parts = []
+for spacing, r0_, r1_, wmin, keep_p in ((7.0, 0, 2600, 0.15, 1.0), (11.0, 2600, 6000, 0.2, 1.0), (14.0, 0, 700, -1, 0.5)):
+    pts = jittered(spacing, r1_, jitter=0.45, rmin=r0_)
+    pb = bearing_of(pts[:, 0], pts[:, 1])
+    vw = valley_weight(pb)
+    sel = (vw > wmin) if wmin >= 0 else (vw <= 0.15)
+    sel &= rng.random(len(pts)) < keep_p
+    parts.append(pts[sel])
+far = np.concatenate(parts)
 d = np.hypot(far[:, 0], far[:, 1])
-fb = bearing_of(far[:, 0], far[:, 1])
 keep = (d > np.array([reach(x, y) for x, y in far]) * 0.92) & in_forest(far[:, 0], far[:, 1], 3)
-# Out of the valley the far forest is hidden behind the near one; keep it sparse there.
-keep &= (valley_weight(fb) > 0.25) | (rng.random(len(far)) < 0.3)
 far = far[keep]
 nf = len(far)
 fz = terrain(far[:, 0], far[:, 1])
-size = rng.uniform(4.5, 9.0, nf) * np.where(rng.random(nf) < 0.08, 1.7, 1.0)
-height = rng.uniform(22, 38, nf) * np.where(size > 9, 1.3, 1.0)
+size = rng.uniform(5.0, 9.0, nf) * np.where(rng.random(nf) < 0.08, 1.6, 1.0) * np.where(np.hypot(far[:, 0], far[:, 1]) > 2600, 1.5, 1.0)
+height = rng.uniform(24, 38, nf) * np.where(size > 9, 1.25, 1.0)
 pos = np.stack([far[:, 0], far[:, 1], fz + height - size * 0.3], 1)
 scl = np.stack([size, size * rng.uniform(0.85, 1.15, nf), size], 1)
 eul = np.stack([np.zeros(nf), np.zeros(nf), rng.uniform(0, 2 * np.pi, nf)], 1)
-shells = kit.instancer3('far_crowns', pos, scl, eul, rng.integers(0, 5, nf), SHELLS)
+shells = kit.instancer3('far_crowns', pos, scl, eul, rng.integers(0, 6, nf), SHELLS)
 print('far crowns', nf)
-
-# Dark cores inside the near crowns.
-CORE_SRC = kit.hidden_collection('cores')
-core_mat = kit.simple_mat('core', C(0.012, 0.025, 0.008), 0.9, spec=0.1)
-bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
-core = bpy.context.object
-core.name = 'core_00'
-core.data.materials.append(core_mat)
-bpy.context.scene.collection.objects.unlink(core)
-CORE_SRC.objects.link(core)
-cpos = np.array([c[0] for c in CORES])
-crad = np.array([c[1] for c in CORES])
-kit.instancer3('crown_cores', cpos, crad, np.zeros((len(CORES), 3)), np.zeros(len(CORES), dtype=np.int32), CORE_SRC)
 
 # ---------------------------------------------------------------- far ranges
 
@@ -988,6 +1004,6 @@ for key, mat in (('bark', BARK), ('bark_dark', BARK_DARK), ('palm', PALM_TRUNK),
         TUBES[key].build(f'wood_{key}', mat)
 LEAVES.build('leaves', SOURCES)
 FRONDS.build('fronds', PALM_SRC)
-print('branchlets', len(LEAVES.pos), 'fronds', len(FRONDS.pos), 'cores', len(CORES))
+print('branchlets', len(LEAVES.pos), 'fronds', len(FRONDS.pos))
 kit.render_to_npy(sc, A['out'], A['mode'])
 print('done', A['mode'])

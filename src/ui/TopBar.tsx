@@ -6,6 +6,7 @@ import { useStore } from '../state/store';
 import { STYLE_SHORT, formatClock } from './common';
 import { TotalPill } from './EditHud';
 import { VIEWS } from './panels';
+import { PhotoButton } from './PhotoBar';
 
 export function TopBar() {
   const unit = useStore((s) => s.unit);
@@ -51,6 +52,7 @@ export function TopBar() {
           {day ? <Sun className="ic" size={16} /> : <Moon className="ic" size={16} />}
           <span className="tabular">{formatClock(time)}</span>
         </button>
+        <PhotoButton />
         <button className="iconbtn glass big hide-phone" onClick={toggleFullscreen} aria-label="Full screen">
           <Maximize className="ic" size={18} />
         </button>

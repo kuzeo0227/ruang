@@ -11,6 +11,7 @@ import { registry } from './render/registry';
 import { useLayout } from './state/layout';
 import { applyLightScene, setRoomLight, toggleRooms } from './render/roomLights';
 import { useStore, type Panel, type Quality } from './state/store';
+import { openPhoto } from './ui/PhotoBar';
 
 const deg = Math.PI / 180;
 
@@ -64,6 +65,8 @@ export function installDebugHook() {
       controls,
       editView,
       registry,
+      /** Open Photo Mode (progress is in store.photo). */
+      photo: openPhoto,
       /** Room lights: scene('evening'), set('living', { level: 0.4 }), toggle(['study']). */
       lights: { scene: applyLightScene, set: setRoomLight, toggle: toggleRooms },
       teleport(x: number, z: number, yawDeg = 0, pitchDeg?: number) {

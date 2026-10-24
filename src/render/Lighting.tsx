@@ -64,11 +64,12 @@ export function Lighting() {
       });
     fetch(base + 'meta.json')
       .then((r) => r.json() as Promise<BackdropMeta>)
-      .then((meta) => Promise.all([meta, load(`band_${size}.webp`), meta.night ? load(`night_${size}.webp`) : null]))
-      .then(([meta, tex, night]) => {
+      .then((meta) => Promise.all([meta, load(`band_${size}.webp`), meta.night ? load(`night_${size}.webp`) : null, meta.water ? load(`water_${size}.webp`) : null]))
+      .then(([meta, tex, night, water]) => {
         if (!alive) return;
-        const old = [skyMaterial.uniforms.landscape!.value, skyMaterial.uniforms.landNight!.value] as (THREE.Texture | null)[];
-        applyBackdrop(skyMaterial, tex, meta, night);
+        const u = skyMaterial.uniforms;
+        const old = [u.landscape!.value, u.landNight!.value, u.waterMask!.value] as (THREE.Texture | null)[];
+        applyBackdrop(skyMaterial, tex, meta, night, water);
         for (const t of old) t?.dispose();
         invalidateLighting(true);
       })
@@ -103,6 +104,8 @@ export function Lighting() {
     u.hazeAmount!.value = 0.1 + 0.25 * (1 - smooth(0, 20, el));
     // Street lamps come on around sunset; lit windows show once the sky has darkened.
     u.cityLights!.value = 1 - smooth(-6, 2, el);
+    // Sun on the water, in the landscape's (dimmed) scale.
+    (u.glint!.value as THREE.Vector3).set(...lightC.color).multiplyScalar(SUN_STRENGTH * lightC.intensity * LAND_SCALE);
 
     const light = sunRef.current;
     registry.sunLight = light;
@@ -354,7 +357,7 @@ function Downlights() {
   const glows = useMemo(() => new Map<SpaceId, THREE.MeshBasicMaterial>(), []);
   const glowFor = (space: SpaceId) => {
     let m = glows.get(space);
-    if (!m) glows.set(space, (m = new THREE.MeshBasicMaterial({ toneMapped: false })));
+    if (!m) glows.set(space, (m = new THREE.MeshBasicMaterial({ name: 'downlight-glow', toneMapped: false })));
     const l = lit.get(space);
     if (l) m.color.copy(kelvinColor(l.kelvin)).multiplyScalar(4 * l.level);
     return m;

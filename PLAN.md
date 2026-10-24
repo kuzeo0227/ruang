@@ -91,7 +91,42 @@ and on a phone over the same Wi-Fi. It is not a buyer-facing product.
   wait until walking resumes.
 - Night white balance follows the colour of the light actually in view (like a camera), within the
   lamps' colour, so mixed lamp and window light stays warm-white.
-- Planned for later phases: lz-string for share links, three-gpu-pathtracer for Photo Mode.
+- Planned for later phases: lz-string for share links.
+
+## Architecture (added in Phase 3)
+
+- Room lights (`src/render/roomLights.ts`): each room has a mode (Auto, On, Off), a dimmer and a colour
+  temperature; scenes set them all. Every downlight has its own colour uniform, so the rooms of the
+  open-plan zone (living, dining, kitchen, corridor) switch and dim separately without recompiling
+  shaders. Lamps and their glowing shades follow their own room. Night exposure adapts only partly to
+  a dimmed room (key × √level), so dimming shows.
+- Wall switch plates are generated with the shell (`src/shell/build.ts`): on the latch side of each
+  room's door (inside bedrooms and the study, outside toilets as is usual in Malaysia), a 4-gang plate
+  inside the front door for the living areas, and one by the balcony slider. `E` flips the plate under
+  the crosshair. `npm run check:shell` checks every door has one, on a wall face, in the right zone.
+- Window views (`tools/views`): procedural scenes rendered in Blender 4.2 (Cycles, CPU) as
+  equirectangular bands from each view's floor height: a day pass, a night pass (only emission: lit
+  windows, street lamps, boats) and for the sea a water mask. `make_band.py` adds distance haze from the
+  mist pass and writes the band, the night lights and the mask as WebP. The sky shader re-lights the
+  band for the time of day, fades the night lights in from sunset, adds the city's light-pollution
+  glow, and draws the sun's glitter on the water (Cox-Munk slope statistics, animated).
+  - KL skyline (`city.py`): districts with their own street grids, terraced houses, condo and office
+    towers (an OSL facade shader for floors, bays and lit windows), parks, rivers, highways, and the
+    landmarks to the north: Merdeka 118, the Petronas Towers, the Exchange 106, KL Tower.
+  - Rainforest (`rainforest.py`): a garden clearing with a lap pool in lowland dipterocarp forest.
+    Near trees are trunks, buttresses, branches and crowns of leafy branchlets (every leaf is
+    geometry, about 2 million branchlets); the edge has bamboo, palms, tree ferns, bananas and
+    climbers; a valley opens to the north-north-east over a canopy of lumpy crowns to hazy hills.
+  - Beach (`beach.py`, plants from `flora.py`): the block's garden and pool, a sea wall, 30 m of sand
+    with leaning coconut palms, parasols, breakers, the sea with boats, a ship and islands, a bay
+    lined with resorts curving out to forested headlands, and a town inland.
+- Photo Mode (`src/render/photo.ts`, `PhotoMode.tsx`, `denoise.ts`): three-gpu-pathtracer traces the
+  shell, furniture and lights from the current camera, with the sky (and window view) rendered as an
+  equirectangular image for light and background. Materials are copied with the app's texture scale,
+  plank rotation and roughness folded in; downlights become spotlights with the same beam, lamps point
+  lights. Intel Open Image Denoise (oidn-web, WebGPU) cleans the image at 16, 64 and 256 samples, using
+  albedo and normal guides rendered once at the start. The result goes through the app's exposure,
+  white balance, bloom and tone mapping, and Save writes a PNG.
 
 ## Phases
 

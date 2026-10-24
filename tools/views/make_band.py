@@ -1,9 +1,10 @@
 # Turns a Blender view render (see kit.py) into the app's window-view band.
 #
-# Reads <dir>/day_rgba.npy and day_mist.npy (linear, premultiplied alpha), and night_rgba.npy if
-# present. Adds aerial haze by distance, tone-maps to sRGB with a soft shoulder, and writes
-# band_6k.webp / band_3k.webp (landscape in RGB, coverage in alpha), night_6k.webp / night_3k.webp
-# (lights only, RGB) and meta.json into the output folder.
+# Reads <dir>/day_rgba.npy and day_mist.npy (linear, premultiplied alpha), and night_rgba.npy and
+# mask_rgba.npy (where the water is) if present. Adds aerial haze by distance, tone-maps to sRGB
+# with a soft shoulder, and writes band_6k.webp / band_3k.webp (landscape in RGB, coverage in
+# alpha), night_6k.webp / night_3k.webp (lights only, RGB), water_6k.webp / water_3k.webp (water
+# mask) and meta.json into the output folder.
 #
 # usage: python3 -I tools/views/make_band.py <render dir> <out dir> --el-min -80 --el-max 14
 #            [--mist-depth 40000] [--visibility 20000] [--haze 0.78,0.82,0.88] [--target 0.42]
@@ -90,6 +91,16 @@ if os.path.exists(night_path):
         img = nimg if width == W else nimg.resize((width, h), Image.LANCZOS)
         img.save(os.path.join(a.out_dir, name), quality=86, method=6)
 
+# Where the water is (the mask pass: sea white, everything else black), for the app's sun glitter.
+mask_path = os.path.join(a.render_dir, 'mask_rgba.npy')
+if os.path.exists(mask_path):
+    m = np.clip(np.load(mask_path)[..., 0], 0, 1)
+    mimg = Image.fromarray((m * 255 + 0.5).astype(np.uint8), 'L')
+    for width, name in ((6144, 'water_6k.webp'), (3072, 'water_3k.webp')):
+        h = int(round(H * width / W))
+        img = mimg if width == W else mimg.resize((width, h), Image.LANCZOS)
+        img.save(os.path.join(a.out_dir, name), quality=90, method=6)
+
 # Landscape colour just below the horizon (haze) and at the bottom of the band (ground fill).
 row = lambda el: int(round((a.el_max - el) / (a.el_max - a.el_min) * (H - 1)))
 near_horizon = disp[row(0) : row(-3) + 1][alpha[row(0) : row(-3) + 1] > 0.5]
@@ -101,6 +112,7 @@ meta = {
     'hazeSRGB': [round(float(c), 4) for c in (near_horizon.mean(0) if len(near_horizon) else haze_srgb)],
     'groundSRGB': [round(float(c), 4) for c in (bottom.mean(0) if len(bottom) else haze_srgb)],
     'night': os.path.exists(night_path),
+    'water': os.path.exists(mask_path),
     'nightPeak': a.night_peak,
     'skyGlow': a.sky_glow,
     'source': 'Rendered in Blender (tools/views)',

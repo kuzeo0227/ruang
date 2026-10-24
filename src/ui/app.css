@@ -70,6 +70,14 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; 
 .cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: var(--r-pill); font-weight: 800; font-size: 14px; color: #fff; background: var(--grad-cta); box-shadow: 0 8px 24px rgba(236, 72, 153, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35); transition: transform var(--fast) var(--spring), box-shadow var(--fast); }
 .cta:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(236, 72, 153, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
 .cta.big { height: 54px; padding: 0 28px; font-size: 16px; }
+.cta:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: none; }
+.photo-btn { padding: 0 16px; }
+.photobar { position: absolute; left: 50%; bottom: calc(var(--bottom) + 8px); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; width: min(600px, calc(100% - var(--left) - var(--right))); padding: 10px 10px 10px 18px; border-radius: var(--r-pill); z-index: 5; pointer-events: auto; animation: panel-in var(--slow) var(--spring); }
+.pb-main { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.pb-title { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pb-title .ic { color: var(--c-price); flex: none; }
+.pb-meter { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+.pb-meter i { display: block; height: 100%; border-radius: 4px; background: var(--grad-cta); transition: width 0.25s linear; }
 .ghostbtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: var(--r-pill); font-size: 13px; font-weight: 700; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--glass-line); transition: background var(--fast); }
 .ghostbtn:hover { background: rgba(255, 255, 255, 0.14); }
 .ghostbtn.small { height: 28px; padding: 0 10px; font-size: 12px; }
@@ -398,9 +406,9 @@ button.view:disabled { cursor: default; }
   .unlocked { display: none; }
 }
 @media (max-width: 480px) {
-  /* Too narrow for every chip: the view is also in the dock, and the running total moves under
-     the right end of the bar. */
-  .topbar .unit-chip, .topbar .c-views { display: none; }
+  /* Too narrow for every chip: the view is also in the dock, Photo Mode is in Settings, and the
+     running total moves under the right end of the bar. */
+  .topbar .unit-chip, .topbar .c-views, .topbar .photo-btn { display: none; }
   .topbar .c-price { position: absolute; top: calc(100% + 8px); right: 0; }
   .howto.keys { grid-template-columns: 1fr; }
 }

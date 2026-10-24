@@ -1,6 +1,6 @@
 // Side panels (bottom sheets on phones): unit, style, lighting, views and settings.
 
-import { Building2, Check, Copy, House, Lightbulb, Lock, Mountain, Palette, Power, Settings, Sun, Moon, SunMoon, Sunrise, Sunset, Trees, Tv, Waves, type LucideIcon } from 'lucide-react';
+import { Building2, Camera, Check, Copy, House, Lightbulb, Lock, Mountain, Palette, Power, Settings, Sun, Moon, SunMoon, Sunrise, Sunset, Trees, Tv, Waves, type LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Color } from 'three';
 import { MATERIALS } from '../catalogue/materials';
@@ -15,6 +15,7 @@ import { sunPosition, sunTimes } from '../render/sun';
 import { useStore, writeSetting, type LightScene, type Quality, type RoomLight, type ViewId } from '../state/store';
 import { PanelFrame, Range, Seg, Switch, compassPoint, formatClock } from './common';
 import { FurniturePanel } from './FurniturePanel';
+import { openPhoto } from './PhotoBar';
 
 export function PanelHost() {
   const panel = useStore((s) => s.panel);
@@ -415,6 +416,10 @@ function SettingsPanel() {
         <button className="ghostbtn" onClick={toEntrance}>
           <House className="ic" size={16} />
           Back to the entrance
+        </button>
+        <button className="ghostbtn" onClick={openPhoto}>
+          <Camera className="ic" size={16} />
+          Photo Mode: a path-traced photo of this view
         </button>
       </div>
       <div className="block">

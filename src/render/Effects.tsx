@@ -214,13 +214,15 @@ function ExposureDriver({ target }: { target: React.RefObject<ExposureEffectImpl
 
 export function Effects() {
   const quality = useStore((s) => s.quality);
+  // The path tracer computes real occlusion; screen-space AO would only darken its image.
+  const photo = useStore((s) => s.photo !== null);
   const q = QUALITY[quality];
   const exposure = useRef<ExposureEffectImpl>(null);
   return (
     <>
       <ExposureDriver target={exposure} />
       <EffectComposer multisampling={0} frameBufferType={THREE.HalfFloatType} enableNormalPass={false}>
-        {q.ao ? <N8AO aoRadius={0.55} distanceFalloff={0.7} intensity={2.2} halfRes={q.aoHalfRes} quality={q.aoHalfRes ? 'medium' : 'high'} color="black" /> : <></>}
+        {q.ao && !photo ? <N8AO aoRadius={0.55} distanceFalloff={0.7} intensity={2.2} halfRes={q.aoHalfRes} quality={q.aoHalfRes ? 'medium' : 'high'} color="black" /> : <></>}
         {q.bloom ? <Bloom mipmapBlur intensity={0.32} luminanceThreshold={0.95} luminanceSmoothing={0.25} radius={0.7} /> : <></>}
         <Exposure ref={exposure} />
         <ToneMapping mode={ToneMappingMode.AGX} />

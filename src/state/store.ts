@@ -57,6 +57,17 @@ const num = (key: string, fallback: number) => {
 
 export type ViewMode = 'walk' | 'plan';
 
+/** Photo Mode: a path-traced still of the current view. */
+export interface PhotoState {
+  status: 'preparing' | 'rendering' | 'denoising' | 'done' | 'failed';
+  /** The image shown has been through the denoiser. */
+  denoised: boolean;
+  /** Preparing the scene, 0 to 1. */
+  progress: number;
+  samples: number;
+  target: number;
+}
+
 export interface State {
   /** Walking through the unit, or looking down at the plan. */
   mode: ViewMode;
@@ -92,6 +103,8 @@ export interface State {
   hint: string | null;
   /** Hide the interface (for clean screenshots). */
   hudHidden: boolean;
+  /** Photo Mode, while it is open. */
+  photo: PhotoState | null;
   /** Which side of the furniture panel is showing. */
   furnitureTab: 'catalogue' | 'bill';
   /** A short message at the bottom of the view, with an Undo button for edits. */
@@ -132,6 +145,7 @@ export const useStore = create<State>((set, get) => ({
   measure: { a: null, b: null },
   hint: null,
   hudHidden: false,
+  photo: null,
   furnitureTab: 'catalogue',
   toast: null,
   player: { x: 0, z: 0, yaw: 0, room: '' },

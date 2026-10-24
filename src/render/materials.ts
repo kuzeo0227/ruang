@@ -552,6 +552,18 @@ function patch(mat: THREE.MeshStandardMaterial, o: PatchOptions, uniforms: Patch
 
 const linear = (hex: string) => new THREE.Color(hex);
 
+/** How the patched shader maps textures, for Photo Mode (which only sees standard material inputs). */
+export interface PhotoHints {
+  /** Real-world size of one texture repeat (UVs are in metres). */
+  texSize: THREE.Vector2;
+  /** U and V swapped (planks running the other way). */
+  rotate: boolean;
+  /** Mean roughness the shader re-centres the roughness map on. */
+  roughness: number;
+  /** For greyscale-textured materials, the texture's mean luminance; 0 otherwise. */
+  luma: number;
+}
+
 export interface ShellMaterial {
   material: THREE.MeshStandardMaterial;
   uniforms: PatchUniforms | null;
@@ -585,9 +597,11 @@ export async function createSurfaceMaterial(spec: SurfaceSpec, zone: Zone | null
   let texSize = new THREE.Vector2(1, 1);
   const targetRough = spec.roughness ?? def?.roughness ?? 0.9;
   let roughMean = 0.5;
+  let lumaMean = 0;
   if (texId) {
     const useColor = !!def?.texture;
     const t = await loadTextureSet(texId, useColor);
+    lumaMean = 0.2126 * t.mean.r + 0.7152 * t.mean.g + 0.0722 * t.mean.b;
     texSize = new THREE.Vector2(t.entry.widthM, t.entry.heightM);
     if (t.color) mat.map = t.color;
     mat.normalMap = t.normal;
@@ -632,6 +646,8 @@ export async function createSurfaceMaterial(spec: SurfaceSpec, zone: Zone | null
     { layout: LAYOUT_CODE[spec.layout], rotate: !!spec.rotate, box: !!zone, roughMap: !!mat.roughnessMap, luma: !!spec.luma && !!mat.map, ...counts },
     uniforms,
   );
+  // What Photo Mode's path tracer needs to reproduce the patched shader's texturing (see photo.ts).
+  mat.userData.photo = { texSize: texSize.clone(), rotate: !!spec.rotate, roughness: targetRough, luma: spec.luma && mat.map ? lumaMean : 0 } satisfies PhotoHints;
   return { material: mat, uniforms };
 }
 

@@ -12,10 +12,23 @@ import { CarryHint, FocusCard, Toast, TouchSheet } from './EditHud';
 import { Minimap } from './Minimap';
 import { LoadingOverlay, StartOverlay, requestLock, useFirstLoadDone } from './Overlays';
 import { PanelHost } from './panels';
+import { PhotoBar, openPhoto } from './PhotoBar';
 import { TopBar } from './TopBar';
 import { TouchControls } from './TouchControls';
 
 export function Hud() {
+  const photo = useStore((s) => s.photo !== null);
+  if (photo) {
+    return (
+      <div className="hud photo">
+        <PhotoBar />
+      </div>
+    );
+  }
+  return <WalkHud />;
+}
+
+function WalkHud() {
   const hudHidden = useStore((s) => s.hudHidden);
   const touch = useStore((s) => s.touchUi);
   const started = useStore((s) => s.started);
@@ -212,6 +225,7 @@ function useShortcuts() {
       if (!s.started) return;
       const tool = TOOLS.find((t) => t.key === e.key);
       if (tool?.panel) s.togglePanel(tool.panel as Exclude<Panel, null>);
+      if ((e.key === 'p' || e.key === 'P') && s.mode === 'walk') openPhoto();
       if (e.key === 'Tab') {
         e.preventDefault();
         if (!useLayout.getState().carrying) s.set({ mode: s.mode === 'plan' ? 'walk' : 'plan' });

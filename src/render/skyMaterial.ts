@@ -16,6 +16,8 @@ export interface BackdropMeta {
   nightPeak?: number;
   /** Strength of the light-pollution glow over the horizon at night (city views). */
   skyGlow?: number;
+  /** There is a water mask (water_6k / water_3k.webp), for the sun's glitter on the sea. */
+  water?: boolean;
 }
 
 const vertexShader = /* glsl */ `
@@ -24,6 +26,7 @@ uniform float rayleigh;
 uniform float turbidity;
 uniform float mieCoefficient;
 varying vec3 vDir;
+varying vec2 vUv;
 varying vec3 vSunDirection;
 varying float vSunfade;
 varying vec3 vBetaR;
@@ -44,10 +47,18 @@ vec3 totalMie(float T) {
   return 0.434 * c * MieConst;
 }
 void main() {
+#ifdef EQUIRECT
+  // A full-screen quad covering an equirectangular image of the whole sky (see createSkyEquirectMaterial).
+  vUv = position.xy * 0.5 + 0.5;
+  vDir = vec3(0.0, 1.0, 0.0);
+  gl_Position = vec4(position.xy, 0.0, 1.0);
+#else
   vec4 worldPosition = modelMatrix * vec4(position, 1.0);
   vDir = worldPosition.xyz - cameraPosition;
+  vUv = vec2(0.0);
   gl_Position = projectionMatrix * viewMatrix * worldPosition;
   gl_Position.z = gl_Position.w;
+#endif
   vSunDirection = normalize(sunDirection);
   vSunE = sunIntensity(vSunDirection.y);
   // Below the horizon the Rayleigh term fades a little so twilight deepens.
@@ -59,6 +70,7 @@ void main() {
 
 const fragmentShader = /* glsl */ `
 varying vec3 vDir;
+varying vec2 vUv;
 varying vec3 vSunDirection;
 varying vec3 vBetaR;
 varying vec3 vBetaM;
@@ -90,6 +102,10 @@ uniform float hasNight;
 uniform float nightPeak;
 uniform float cityLights;
 uniform float skyGlow;
+// Water: where it is, and the sun's irradiance (colour × strength) for its glitter.
+uniform sampler2D waterMask;
+uniform float hasWater;
+uniform vec3 glint;
 
 const float pi = 3.141592653589793;
 const float rayleighZenithLength = 8.4E3;
@@ -153,7 +169,14 @@ vec3 skyRadiance(vec3 direction, out vec3 Fex) {
 }
 
 void main() {
+#ifdef EQUIRECT
+  // three-gpu-pathtracer's equirect layout (equirectUvToDirection).
+  vec2 eq = vec2(vUv.x - 0.5, 1.0 - vUv.y);
+  float sinPhi = sin(eq.y * pi);
+  vec3 direction = vec3(sinPhi * cos(eq.x * 2.0 * pi), cos(eq.y * pi), sinPhi * sin(eq.x * 2.0 * pi));
+#else
   vec3 direction = normalize(vDir);
+#endif
   vec3 Fex;
   vec3 sky = skyRadiance(direction, Fex);
   float cosTheta = dot(direction, vSunDirection);
@@ -228,6 +251,23 @@ void main() {
       vec3 lights = srgbToLinear(texture2D(landNight, vec2(u, (el - elMin) / (elMax - elMin))).rgb);
       land += lights * nightPeak * cityLights * mix(1.0, nightLight, night);
     }
+    // The sun's glitter on water: the facets of a wind-rippled sea that mirror the sun into the eye
+    // (Cox-Munk slope statistics), broken into glints that come and go as the waves move.
+    if (hasWater > 0.5 && el < -0.05 && el >= elMin && vSunDirection.y > -0.02) {
+      float w = texture2D(waterMask, vec2(u, (el - elMin) / (elMax - elMin))).r;
+      if (w > 0.01) {
+        vec3 h = normalize(vSunDirection - direction);
+        float tan2 = dot(h.xz, h.xz) / max(h.y * h.y, 1e-4);
+        const float slope2 = 0.03;
+        float pdf = exp(-tan2 / slope2) / (pi * slope2 * pow(max(h.y, 0.05), 4.0));
+        float fres = 0.02 + 0.98 * pow(1.0 - clamp(dot(h, -direction), 0.0, 1.0), 5.0);
+        vec2 sea = direction.xz / max(-direction.y, 0.01);
+        float sparkle = noise(sea * 38.0 + vec2(time * 0.9, time * 0.4)) + noise(sea * 61.0 - vec2(time * 0.5, time * 1.1));
+        sparkle = 0.25 + 3.0 * pow(max(sparkle, 0.0), 3.0);
+        float up = smoothstep(-0.02, 0.06, vSunDirection.y);
+        land += glint * (fres * pdf * 0.25 / max(-direction.y, 0.05)) * sparkle * w * up;
+      }
+    }
     color = mix(sky, land, mask);
   }
   gl_FragColor = vec4(color, 1.0);
@@ -263,6 +303,9 @@ export function createSkyMaterial(): THREE.ShaderMaterial {
       twilight: { value: 0 },
       landNight: { value: null },
       hasNight: { value: 0 },
+      waterMask: { value: null },
+      hasWater: { value: 0 },
+      glint: { value: new THREE.Vector3(0, 0, 0) },
       nightPeak: { value: 0.04 },
       cityLights: { value: 0 },
       skyGlow: { value: 0 },
@@ -277,11 +320,13 @@ export function createSkyMaterial(): THREE.ShaderMaterial {
   });
 }
 
-export function applyBackdrop(mat: THREE.ShaderMaterial, tex: THREE.Texture | null, meta: BackdropMeta | null, nightTex: THREE.Texture | null = null) {
+export function applyBackdrop(mat: THREE.ShaderMaterial, tex: THREE.Texture | null, meta: BackdropMeta | null, nightTex: THREE.Texture | null = null, water: THREE.Texture | null = null) {
   mat.uniforms.landscape!.value = tex;
   mat.uniforms.hasLandscape!.value = tex && meta ? 1 : 0;
   mat.uniforms.landNight!.value = nightTex;
   mat.uniforms.hasNight!.value = nightTex && meta ? 1 : 0;
+  mat.uniforms.waterMask!.value = water;
+  mat.uniforms.hasWater!.value = water && meta ? 1 : 0;
   mat.uniforms.nightPeak!.value = meta?.nightPeak ?? 0.04;
   mat.uniforms.skyGlow!.value = meta?.skyGlow ?? 0;
   if (meta) {
@@ -295,3 +340,20 @@ export function applyBackdrop(mat: THREE.ShaderMaterial, tex: THREE.Texture | nu
 
 /** The one sky used everywhere: the backdrop sphere, the sky environment map and the daylight capture. */
 export const skyMaterial = createSkyMaterial();
+
+/**
+ * The same sky (sharing its uniforms) drawn as an equirectangular image by a full-screen quad, for
+ * Photo Mode's path tracer.
+ */
+export function createSkyEquirectMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    name: 'RuangSkyEquirect',
+    uniforms: skyMaterial.uniforms,
+    defines: { EQUIRECT: '' },
+    vertexShader,
+    fragmentShader,
+    depthWrite: false,
+    depthTest: false,
+    toneMapped: false,
+  });
+}

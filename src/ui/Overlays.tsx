@@ -99,6 +99,7 @@ export function StartOverlay() {
               [['E'], 'Doors, light switches, pick up'],
               [['M'], 'Tape measure'],
               [['L'], 'All lights on or off'],
+              [['P'], 'Photo Mode'],
               [['1–4'], 'Style, lighting, views'],
               [['Esc'], 'Free the cursor'],
             ].map(([keys, label]) => (

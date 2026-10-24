@@ -137,7 +137,7 @@ export function Player() {
     const el = gl.domElement;
     const typing = (e: KeyboardEvent) => (e.target instanceof HTMLInputElement && e.target.type !== 'range') || e.target instanceof HTMLTextAreaElement;
     const down = (e: KeyboardEvent) => {
-      if (typing(e) || !useStore.getState().started || useStore.getState().mode === 'plan') return;
+      if (typing(e) || !useStore.getState().started || useStore.getState().mode === 'plan' || useStore.getState().photo) return;
       controls.keys.add(e.code);
       if (e.code === 'KeyE' && !furnitureUse()) interact();
       if (e.code === 'KeyM') measureAction();
@@ -210,7 +210,12 @@ export function Player() {
     const dt = Math.min(rawDt, 0.05);
     const st = useStore.getState();
     // Looking at the plan: the walker waits where they were (the plan camera is the default now).
-    if (st.mode === 'plan') return;
+    // In Photo Mode the camera holds still while the photo is traced.
+    if (st.mode === 'plan' || st.photo) {
+      controls.lookDX = 0;
+      controls.lookDY = 0;
+      return;
+    }
     const cam = camera as THREE.PerspectiveCamera;
     if (controls.teleport) {
       controls.position.set(controls.teleport.x, 0, controls.teleport.z);

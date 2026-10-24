@@ -10,6 +10,7 @@ import { FurnitureView } from './FurnitureView';
 import { Lighting } from './Lighting';
 import { setMaxAnisotropy } from './materials';
 import { MeasureView } from './MeasureView';
+import { PhotoMode } from './PhotoMode';
 import { PlanView } from './PlanView';
 import { Player, setActiveCamera } from './Player';
 import { QUALITY, dprFor } from './quality';
@@ -57,6 +58,7 @@ export function Viewer() {
       <PlanView />
       <Player />
       <MeasureView />
+      <PhotoMode />
       <Effects />
       <StatsProbe />
     </Canvas>

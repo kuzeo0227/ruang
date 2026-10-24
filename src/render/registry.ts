@@ -69,6 +69,8 @@ export const registry = {
     probes: true,
     skyEnv: true,
   },
+  /** Set by Photo Mode's Save: called with the finished frame as a PNG data URL. */
+  photoSave: null as null | ((dataUrl: string) => void),
   /** True while reflection probes are being captured. */
   probeBusy: false,
   /** Bumped whenever lighting changes; probes use it to know when to recapture. */
