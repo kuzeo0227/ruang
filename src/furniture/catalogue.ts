@@ -143,7 +143,8 @@ export function defaultElevation(item: CatalogueItem, variant?: number): number 
     case 'vanity':
       return wall ? 0.38 : 0;
     case 'pendant':
-      return item.model.kind === 'polyhaven' ? CEIL - h : 1.55;
+      // About 90 cm over a dining table, the top of the usual range, so it clears the eye line.
+      return item.model.kind === 'polyhaven' ? CEIL - h : 1.65;
     case 'downlight':
       return CEIL;
     default:

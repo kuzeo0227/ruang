@@ -497,7 +497,13 @@ export function buildShell(plan: UnitPlan, opts: BuildOptions = {}): ShellData {
 
       if (kind === 'door') {
         const spec = o.spec as Extract<Opening, { kind: 'door' }>;
-        const tm = B(zone, 'timber');
+        // Swing side in world: swingSide × plan left normal.
+        const swingAcross = spec.swingSide * w.leftNormalSign;
+        // A door is lit as the room it swings into, where its leaf spends its open life; the main
+        // door's other side is the foyer recess outside the unit.
+        const into = swingAcross > 0 ? plus : minus;
+        const doorZone: ZoneId = into && indoor(into) ? into.zone : zone;
+        const tm = B(doorZone, 'timber');
         const lin = 20;
         const head = y1;
         // Linings across the full wall thickness, and architraves on both faces.
@@ -517,8 +523,6 @@ export function buildShell(plan: UnitPlan, opts: BuildOptions = {}): ShellData {
         const hingeAlong = hingeAtS0 ? o.s0 + lin + 2 : o.s1 - lin - 2;
         const Ldir: V3 = v3.scale(A, hingeAtS0 ? 1 : -1);
         const zLocal = v3.cross(Ldir, UP);
-        // Swing side in world: swingSide × plan left normal.
-        const swingAcross = spec.swingSide * w.leftNormalSign;
         const S: V3 = v3.scale(N, swingAcross);
         const sDotZ = S[0] * zLocal[0] + S[2] * zLocal[2];
         const thick = spec.role === 'main' ? 0.05 : 0.04;
@@ -547,7 +551,7 @@ export function buildShell(plan: UnitPlan, opts: BuildOptions = {}): ShellData {
         const r1 = P(w.axis, o.s1, across1, 0);
         doors.push({
           id: spec.id,
-          zone,
+          zone: doorZone,
           role: spec.role,
           hinge,
           rotationY: Math.atan2(-Ldir[2], Ldir[0]),

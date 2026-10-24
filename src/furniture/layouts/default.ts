@@ -251,9 +251,12 @@ export function defaultLayout(plan: UnitPlan, style: StyleId): Placement[] {
     L.at('planter', bal.x0 + 0.03 + planter.w / 2, bal.z0 + 0.06 + planter.d / 2, 'S');
   }
 
-  // ---------- Foyer (outside the main door) and corridor ----------
+  // ---------- Entrance: shoe cabinet just inside the main door, north of its swing; corridor print ----------
+  // The foyer is a recess outside the door, open to the common corridor, so the cabinet stands
+  // indoors against the east wall the recess shares.
+  const door = openingSpan(plan, 'main-door');
   const foy = R.foyer;
-  if (foy) L.wall('shoeCabinet', 'S', foy.z1, foy.x0 + 0.1 + L.size('shoeCabinet').w / 2);
+  if (door && din && foy) L.wall('shoeCabinet', 'E', foy.x1, din.z1 - door.width - 0.06 - L.size('shoeCabinet').w / 2);
   if (corridor) L.wall('decor', 'N', corridor.z0, corridor.x0 + 0.9, { id: 'print', finish: pick.frame });
 
   return L.list;
