@@ -18,6 +18,8 @@ export interface BackdropMeta {
   skyGlow?: number;
   /** There is a water mask (water_6k / water_3k.webp), for the sun's glitter on the sea. */
   water?: boolean;
+  /** Share of the time-of-day haze at the horizon (default 1; 0 where near trees fill the horizon). */
+  horizonHaze?: number;
 }
 
 const vertexShader = /* glsl */ `
@@ -95,6 +97,7 @@ uniform vec3 landLight;
 uniform vec3 groundColor;
 uniform vec3 hazeColor;
 uniform float hazeAmount;
+uniform float hazeScale;
 // Night lights: the brightest lights' radiance (the texture is normalised to them), and how far
 // they are switched on (dusk to night).
 uniform sampler2D landNight;
@@ -243,7 +246,7 @@ void main() {
     }
     land *= landLight * mix(1.0, nightLight, night);
     // Distant haze takes on the current sky colour near the horizon.
-    float haze = hazeAmount * (1.0 - smoothstep(0.0, 6.0, abs(el))) ;
+    float haze = hazeAmount * hazeScale * (1.0 - smoothstep(0.0, 6.0, abs(el)));
     vec3 horizonSky = skyRadiance(normalize(vec3(direction.x, 0.02, direction.z)), Fex) * skyScale + nightSky * night * nightLight;
     land = mix(land, horizonSky, haze);
     // Lit windows and street lamps (already dimmed by distance in the texture).
@@ -300,6 +303,7 @@ export function createSkyMaterial(): THREE.ShaderMaterial {
       groundColor: { value: new THREE.Vector3(0.45, 0.38, 0.3) },
       hazeColor: { value: new THREE.Vector3(0.6, 0.65, 0.7) },
       hazeAmount: { value: 0.15 },
+      hazeScale: { value: 1 },
       twilight: { value: 0 },
       landNight: { value: null },
       hasNight: { value: 0 },
@@ -329,6 +333,7 @@ export function applyBackdrop(mat: THREE.ShaderMaterial, tex: THREE.Texture | nu
   mat.uniforms.hasWater!.value = water && meta ? 1 : 0;
   mat.uniforms.nightPeak!.value = meta?.nightPeak ?? 0.04;
   mat.uniforms.skyGlow!.value = meta?.skyGlow ?? 0;
+  mat.uniforms.hazeScale!.value = meta?.horizonHaze ?? 1;
   if (meta) {
     mat.uniforms.elMin!.value = meta.elMinDeg;
     mat.uniforms.elMax!.value = meta.elMaxDeg;

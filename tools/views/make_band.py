@@ -30,6 +30,9 @@ p.add_argument('--exposure', type=float, default=0.0, help='fixed exposure inste
 p.add_argument('--night-peak', type=float, default=0.04, help="app radiance of the brightest night lights (scene units)")
 p.add_argument('--sky-glow', type=float, default=0.0, help='light-pollution glow over the horizon at night (0 = none)')
 p.add_argument('--night-percentile', type=float, default=99.0, help='lit pixels at or above this percentile show at full brightness')
+p.add_argument('--horizon-haze', type=float, default=1.0, help="share of the app's time-of-day haze at the horizon (0 when near things fill it)")
+p.add_argument('--sea-shade', type=float, default=0.0, help='shade far water (from the mask pass) towards --sea-colour, up to this share near the horizon')
+p.add_argument('--sea-colour', default='0.30,0.42,0.50', help='deep water colour seen at a low angle, display sRGB')
 p.add_argument('--preview', default='')
 a = p.parse_args()
 
@@ -63,6 +66,16 @@ solid = alpha > 0.99
 target_lin = ((a.target + 0.055) / 1.055) ** 2.4
 exposure = a.exposure or target_lin / max(float(np.median(lum[solid])), 1e-6)
 disp = tonemap(rgb, exposure)
+# Far water: seen at a low angle, wind waves turn their facets towards the eye, hiding the bright
+# horizon a bump-mapped sea mirrors almost whole, so the distant sea shows its own deep blue.
+mask_path = os.path.join(a.render_dir, 'mask_rgba.npy')
+if a.sea_shade > 0 and os.path.exists(mask_path):
+    water = np.clip(np.load(mask_path)[..., 0], 0, 1).astype(np.float32)
+    el = np.linspace(a.el_max, a.el_min, disp.shape[0], dtype=np.float32)[:, None]
+    t = np.clip((el + 14) / 12.5, 0, 1)
+    f = (a.sea_shade * t * t * (3 - 2 * t) * water)[..., None]
+    sea = np.array([float(v) for v in a.sea_colour.split(',')], dtype=np.float32)
+    disp = disp * (1 - f) + sea * f
 disp = disp * (1 - haze) + haze_srgb * haze
 
 H, W = disp.shape[:2]
@@ -92,7 +105,6 @@ if os.path.exists(night_path):
         img.save(os.path.join(a.out_dir, name), quality=86, method=6)
 
 # Where the water is (the mask pass: sea white, everything else black), for the app's sun glitter.
-mask_path = os.path.join(a.render_dir, 'mask_rgba.npy')
 if os.path.exists(mask_path):
     m = np.clip(np.load(mask_path)[..., 0], 0, 1)
     mimg = Image.fromarray((m * 255 + 0.5).astype(np.uint8), 'L')
@@ -115,6 +127,7 @@ meta = {
     'water': os.path.exists(mask_path),
     'nightPeak': a.night_peak,
     'skyGlow': a.sky_glow,
+    'horizonHaze': a.horizon_haze,
     'source': 'Rendered in Blender (tools/views)',
 }
 with open(os.path.join(a.out_dir, 'meta.json'), 'w') as f:

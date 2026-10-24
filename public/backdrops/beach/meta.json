@@ -1,0 +1,21 @@
+{
+  "elMinDeg": -80.0,
+  "elMaxDeg": 15.0,
+  "uNorth": 0.5,
+  "hazeSRGB": [
+    0.3449,
+    0.4168,
+    0.4281
+  ],
+  "groundSRGB": [
+    0.3353,
+    0.4297,
+    0.3286
+  ],
+  "night": true,
+  "water": true,
+  "nightPeak": 0.04,
+  "skyGlow": 0.0,
+  "horizonHaze": 0.5,
+  "source": "Rendered in Blender (tools/views)"
+}

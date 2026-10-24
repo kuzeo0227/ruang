@@ -692,6 +692,7 @@ print('edge done, branchlets', len(LEAVES.pos), 'fronds', len(FRONDS.pos))
 GARDEN = 70.0  # half-size of the garden raster (m)
 RES = 4096
 POOL = dict(cx=12.0, cy=24.0, w=8.0, d=25.0, ang=math.radians(-12))
+POOL_RIM = 1.4  # width of the surround laid square to the pool (m)
 
 
 def garden_raster():
@@ -784,11 +785,28 @@ for i in range(n - 1):
             continue
         lx = (cx - POOL['cx']) * pool_ca + (cy - POOL['cy']) * pool_sa
         ly = -(cx - POOL['cx']) * pool_sa + (cy - POOL['cy']) * pool_ca
-        if abs(lx) < POOL['w'] / 2 - 0.2 and abs(ly) < POOL['d'] / 2 - 0.2:
+        if abs(lx) < POOL['w'] / 2 + POOL_RIM - 0.6 and abs(ly) < POOL['d'] / 2 + POOL_RIM - 0.6:
             continue
         a = i * n + j
         faces.append((a, a + 1, a + n + 1, a + n))
 kit.mesh_object('garden', verts, faces, gm, smooth=True)
+# The grid's hole for the pool is stepped (the pool is turned): a rim of the same surface, square to
+# the pool and a touch higher, covers the steps and gives the pool a straight edge.
+rim_v, rim_f = [], []
+for side in range(4):
+    for k in range(40):
+        t0, t1 = k / 40, (k + 1) / 40
+        quad = []
+        for t, out in ((t0, 0), (t0, 1), (t1, 1), (t1, 0)):
+            r = POOL_RIM * out
+            hw_, hd_ = POOL['w'] / 2 + r, POOL['d'] / 2 + r
+            px, py = [(-hw_ + 2 * hw_ * t, -hd_), (hw_, -hd_ + 2 * hd_ * t), (hw_ - 2 * hw_ * t, hd_), (-hw_, hd_ - 2 * hd_ * t)][side]
+            wx = POOL['cx'] + px * pool_ca - py * pool_sa
+            wy = POOL['cy'] + px * pool_sa + py * pool_ca
+            quad.append((wx, wy, float(terrain(np.array(wx), np.array(wy))) + 0.02))
+        rim_f.append(tuple(range(len(rim_v), len(rim_v) + 4)))
+        rim_v.extend(quad)
+kit.mesh_object('pool_rim', rim_v, rim_f, gm)
 outer = terrain_mesh('terrain', GARDEN * 0.97, 30000, 420, 720, HILL_CANOPY)
 
 # The lap pool: a tiled basin under a clear water surface.

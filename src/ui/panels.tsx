@@ -317,8 +317,8 @@ function LightingPanel() {
 
 export const VIEWS: { id: ViewId; name: string; icon: LucideIcon; img: string; floor: string; note: string; soon?: string }[] = [
   { id: 'mountain', name: 'Mountain', icon: Mountain, img: '/ui/views/mountain.jpg', floor: 'Ground floor', note: 'A highland valley seen from the ground floor.' },
-  { id: 'rainforest', name: 'Rainforest', icon: Trees, img: '/ui/views/rainforest.jpg', floor: 'Level 5', note: 'Level 5, about 15 m up: a garden clearing in lowland rainforest, a valley opening to the north-north-east.', soon: 'Soon' },
-  { id: 'beach', name: 'Beach', icon: Waves, img: '/ui/views/beach.jpg', floor: 'Level 10', note: 'Level 10, about 30 m up, on the sea front.', soon: 'Soon' },
+  { id: 'rainforest', name: 'Rainforest', icon: Trees, img: '/ui/views/rainforest.jpg', floor: 'Level 5', note: 'Level 5, about 15 m up: a garden and pool in a clearing of lowland rainforest, with a valley opening to the north-north-east. Garden lights come on at dusk.' },
+  { id: 'beach', name: 'Beach', icon: Waves, img: '/ui/views/beach.jpg', floor: 'Level 10', note: 'Level 10, about 30 m up, over the garden and a palm-lined beach to a bay with islands. The sun glitters on the sea; at night the resorts and fishing boats light up.' },
   { id: 'city', name: 'KL skyline', icon: Building2, img: '/ui/views/city.jpg', floor: 'Level 38', note: 'Level 38, about 115 m up, looking north over Kuala Lumpur to Merdeka 118, the Petronas Towers and the Titiwangsa range. Lights come on at dusk.' },
 ];
 

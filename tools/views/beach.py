@@ -43,7 +43,8 @@ if NIGHT or MASK:
     kit.world_black(sc)
     sc.cycles.max_bounces = 2 if NIGHT else 0
 else:
-    kit.world_sky(sc, sun_elevation=50, sun_azimuth=250, strength=1.0, air=1.0, dust=3.0, ozone=1.0, altitude=40)
+    # Sea air is clearer than Kuala Lumpur's: a bluer horizon for the water to mirror.
+    kit.world_sky(sc, sun_elevation=50, sun_azimuth=250, strength=1.0, air=1.0, dust=1.5, ozone=1.0, altitude=40)
     kit.sun_lamp(sc, 50, 250, strength=3.2, angle_deg=0.6)
 kit.mist(sc, 0, 40000)
 fl = flora.Flora()
@@ -301,10 +302,17 @@ def sea_material():
     swell.inputs['Distortion'].default_value = 6.0
     swell.inputs['Detail'].default_value = 3.0
     nt.links.new(tc.outputs['Object'], swell.inputs['Vector'])
+    # Wind waves a few metres long: their facets turn towards a low viewpoint, so the far sea shows
+    # more of its own deep blue and mirrors higher, bluer sky instead of the bright horizon.
+    n2 = nt.nodes.new('ShaderNodeTexNoise')
+    n2.inputs['Scale'].default_value = 0.15
+    n2.inputs['Detail'].default_value = 6
+    nt.links.new(tc.outputs['Object'], n2.inputs['Vector'])
     height = kit.math_node(nt, 'ADD', n1.outputs['Fac'], kit.math_node(nt, 'MULTIPLY', swell.outputs['Fac'], 0.6))
+    height = kit.math_node(nt, 'ADD', height, kit.math_node(nt, 'MULTIPLY', n2.outputs['Fac'], 2.0))
     bump = nt.nodes.new('ShaderNodeBump')
-    bump.inputs['Strength'].default_value = 0.12
-    bump.inputs['Distance'].default_value = 0.5
+    bump.inputs['Strength'].default_value = 0.35
+    bump.inputs['Distance'].default_value = 0.8
     nt.links.new(height, bump.inputs['Height'])
     # Foam: the swash at the water's edge and two lines of breakers, broken up by noise.
     fn = nt.nodes.new('ShaderNodeTexNoise')
@@ -329,10 +337,10 @@ def sea_material():
     foam = kit.math_node(nt, 'MAXIMUM', kit.math_node(nt, 'MULTIPLY', swash, 0.8), band(16.0, 2.2, 0.5))
     foam = kit.math_node(nt, 'MAXIMUM', foam, band(34.0, 1.6, 0.6), clamp=True)
     col = kit.mix_rgb(nt, foam, water, C(0.72, 0.75, 0.75))
-    p = kit.principled(nt, rough=0.03, spec=0.5)
+    p = kit.principled(nt, rough=0.06, spec=0.5)
     p.inputs['IOR'].default_value = 1.333
     nt.links.new(col, p.inputs['Base Color'])
-    nt.links.new(kit.mix_float(nt, foam, 0.03, 0.75), p.inputs['Roughness'])
+    nt.links.new(kit.mix_float(nt, foam, 0.06, 0.75), p.inputs['Roughness'])
     nt.links.new(bump.outputs['Normal'], p.inputs['Normal'])
     nt.links.new(p.outputs['BSDF'], out.inputs['Surface'])
     return m

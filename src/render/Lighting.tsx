@@ -100,7 +100,10 @@ export function Lighting() {
       THREE.MathUtils.lerp(lightC.color[2], 1, warmth) * level,
     );
     const nightC = new THREE.Vector3(0.0002, 0.00028, 0.0005);
-    (u.landLight!.value as THREE.Vector3).copy(nightC.lerp(day, smooth(-8, 2, el)));
+    // After sunset the land dims with the afterglow (a factor e per degree, close to measured
+    // twilight illuminance), so the sky stays brighter than the ground, down to moonlight.
+    const afterglow = el >= 1 ? 1 : Math.exp(el - 1);
+    (u.landLight!.value as THREE.Vector3).copy(nightC.lerp(day, afterglow));
     u.hazeAmount!.value = 0.1 + 0.25 * (1 - smooth(0, 20, el));
     // Street lamps come on around sunset; lit windows show once the sky has darkened.
     u.cityLights!.value = 1 - smooth(-6, 2, el);
