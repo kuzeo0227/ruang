@@ -15,6 +15,7 @@ import { Player, setActiveCamera } from './Player';
 import { QUALITY, dprFor } from './quality';
 import { registry } from './registry';
 import { ShellView } from './ShellView';
+import { Switches } from './Switches';
 
 export function Viewer() {
   const quality = useStore((s) => s.quality);
@@ -51,6 +52,7 @@ export function Viewer() {
         <ShellView />
       </Suspense>
       <FurnitureView />
+      <Switches />
       <EditController />
       <PlanView />
       <Player />

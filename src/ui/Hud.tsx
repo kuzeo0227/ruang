@@ -1,6 +1,6 @@
 // Everything drawn over the 3D view, plus the panel shortcuts and touch/mouse switching.
 
-import { DoorClosed, DoorOpen, Footprints, Map as MapIcon, MousePointer2, Ruler, X } from 'lucide-react';
+import { DoorClosed, DoorOpen, Footprints, Lightbulb, LightbulbOff, Map as MapIcon, MousePointer2, Ruler, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { formatLength } from '../render/MeasureView';
 import { interact } from '../render/Player';
@@ -71,13 +71,13 @@ function Crosshair() {
   );
 }
 
-/** "Open door" under the crosshair: a key hint on desktop, a button on touch. */
+/** "Open door" or "Switch on Bedroom 1" under the crosshair: a key hint on desktop, a button on touch. */
 function ActionHint() {
   const hint = useStore((s) => s.hint);
   const touch = useStore((s) => s.touchUi);
   const furniture = useLayout((s) => !!(s.hovered || s.carrying || s.selected));
   if (!hint || furniture) return null;
-  const Icon = hint.startsWith('Open') ? DoorOpen : DoorClosed;
+  const Icon = hint.startsWith('Switch on') ? Lightbulb : hint.startsWith('Switch off') ? LightbulbOff : hint.startsWith('Open') ? DoorOpen : DoorClosed;
   return touch ? (
     <button className="actionhint glass tappable" onClick={interact}>
       <Icon className="ic" size={16} />

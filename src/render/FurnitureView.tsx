@@ -12,22 +12,23 @@ import { buildItem, detailStyle } from '../furniture/gen';
 import { defaultLayout } from '../furniture/layouts';
 import type { Placement } from '../furniture/types';
 import { CEIL } from '../shell/build';
-import type { ShellData, ZoneId } from '../shell/types';
+import type { ShellData, SpaceId, ZoneId } from '../shell/types';
 import { useLayout } from '../state/layout';
 import { useStore } from '../state/store';
 import { ensureBvh } from './bvh';
 import { FURNITURE_LAYER, MAX_LAMPS, zoneLampUniforms } from './daylight';
 import { ensureFurnitureMaterial, furnitureMaterialNow, modelMaterial } from './furnitureMaterials';
-import { kelvinColor, useLightsOn } from './Lighting';
+import { kelvinColor } from './Lighting';
 import { loadModel, modelNow } from './models';
 import { invalidateLighting, registry, type Obstacle } from './registry';
 import { hiddenInPlan } from './PlanView';
+import { useLitRooms, type LitRoom } from './roomLights';
 import { getShell, spaceAt } from './shellCache';
 
-/** The zone a placement is lit as, and the world height of its base. */
-export function whereIs(shell: ShellData, p: Placement): { zone: ZoneId; y: number } {
+/** The room and zone a placement is lit as, and the world height of its base. */
+export function whereIs(shell: ShellData, p: Placement): { zone: ZoneId; space: SpaceId | null; y: number } {
   const space = spaceAt(shell, p.x, p.z);
-  return { zone: space?.zone ?? 'exterior', y: (space?.floorY ?? 0) + p.y };
+  return { zone: space?.zone ?? 'exterior', space: space?.id ?? null, y: (space?.floorY ?? 0) + p.y };
 }
 
 interface Part {
@@ -49,7 +50,7 @@ const landscape = (p: Placement) => {
 function partsFor(shell: ShellData, p: Placement, style: StyleId): Part[] | null {
   const item = itemOf(p);
   if (!item) return [];
-  const { zone, y } = whereIs(shell, p);
+  const { zone, space, y } = whereIs(shell, p);
   if (item.model.kind === 'parametric') {
     const res = buildItem(item, { variant: p.variant, finish: p.finish, style, toCeiling: CEIL - y });
     if (!res) return [];
@@ -58,7 +59,7 @@ function partsFor(shell: ShellData, p: Placement, style: StyleId): Part[] | null
     for (const [slot, geometry] of res.geometry) {
       const def = res.slots[slot];
       if (!def) continue;
-      const material = furnitureMaterialNow(zone, def, ds, landscape(p));
+      const material = furnitureMaterialNow(zone, def, ds, landscape(p), space);
       if (!material) return null;
       ensureBvh(geometry);
       out.push({ key: slot, geometry, material, shadow: !material.transparent });
@@ -68,7 +69,7 @@ function partsFor(shell: ShellData, p: Placement, style: StyleId): Part[] | null
   const model = modelNow(item);
   if (!model) return null;
   return model.parts.map((part, i) => {
-    const material = modelMaterial(shell, zone, part.material);
+    const material = modelMaterial(shell, zone, part.material, space);
     return { key: `m${i}`, geometry: part.geometry, material, shadow: !material.transparent || material.alphaTest > 0 };
   });
 }
@@ -77,12 +78,12 @@ function partsFor(shell: ShellData, p: Placement, style: StyleId): Part[] | null
 async function prepare(shell: ShellData, p: Placement, style: StyleId): Promise<void> {
   const item = itemOf(p);
   if (!item) return;
-  const { zone, y } = whereIs(shell, p);
+  const { zone, space, y } = whereIs(shell, p);
   if (item.model.kind === 'parametric') {
     const res = buildItem(item, { variant: p.variant, finish: p.finish, style, toCeiling: CEIL - y });
     if (!res) return;
     const ds = detailStyle(item, style);
-    await Promise.all(Object.values(res.slots).map((def) => ensureFurnitureMaterial(shell, zone, def, ds, landscape(p))));
+    await Promise.all(Object.values(res.slots).map((def) => ensureFurnitureMaterial(shell, zone, def, ds, landscape(p), space)));
   } else {
     await loadModel(item);
   }
@@ -123,37 +124,40 @@ const LAMPS: Partial<Record<CategoryId, LampSpec>> = {
   ceilingFan: { at: () => 0.02, down: 0.7, power: 0.009 },
 };
 const ARM_LAMP: LampSpec = { at: (h) => h - 0.12, down: 0.85, power: 0.003, fwd: 0.18 };
-const LAMP_COLOUR = kelvinColor(2700);
 /** Luminance of a lit shade, in scene units (sunlit white paper is about 1). */
 const SHADE_GLOW = 0.035;
 
-function updateLamps(shell: ShellData, list: Placement[], on: boolean) {
-  const byZone = new Map<ZoneId, { x: number; y: number; z: number; down: number; power: number }[]>();
+/** Each lamp follows its room's switch, dimmer and colour. */
+function updateLamps(shell: ShellData, list: Placement[], lit: Map<SpaceId, LitRoom>) {
+  const byZone = new Map<ZoneId, { x: number; y: number; z: number; down: number; power: number; light: LitRoom | undefined }[]>();
   for (const p of list) {
     const item = itemOf(p);
     if (!item) continue;
     const spec = item.id === 'lamp-arm' ? ARM_LAMP : LAMPS[item.category];
     if (!spec) continue;
-    const { zone, y } = whereIs(shell, p);
+    const { zone, space, y } = whereIs(shell, p);
     const fwd = spec.fwd ?? 0;
     let arr = byZone.get(zone);
     if (!arr) byZone.set(zone, (arr = []));
-    arr.push({ x: p.x + Math.sin(p.rot) * fwd, y: y + spec.at(sizeOf(item, p.variant).h), z: p.z + Math.cos(p.rot) * fwd, down: spec.down, power: spec.power });
+    arr.push({ x: p.x + Math.sin(p.rot) * fwd, y: y + spec.at(sizeOf(item, p.variant).h), z: p.z + Math.cos(p.rot) * fwd, down: spec.down, power: spec.power, light: space ? lit.get(space) : undefined });
   }
   for (const z of shell.zones) {
     const u = zoneLampUniforms(z.id);
     const lamps = (byZone.get(z.id) ?? []).sort((a, b) => b.power - a.power).slice(0, MAX_LAMPS);
     for (let i = 0; i < MAX_LAMPS; i++) {
       const l = lamps[i];
-      if (l && on) {
+      if (l?.light?.on) {
         u.pos.value[i]!.set(l.x, l.y, l.z, l.down);
-        u.color.value[i]!.copy(LAMP_COLOUR).multiplyScalar(l.power);
+        u.color.value[i]!.copy(kelvinColor(l.light.lampKelvin)).multiplyScalar(l.power * l.light.level);
       } else u.color.value[i]!.setRGB(0, 0, 0);
     }
   }
-  for (const [m, glow] of registry.glowMaterials) {
-    if (glow < 0) m.emissive.copy(m.userData.emissiveOn as THREE.Color).multiplyScalar(on ? 0.08 : 0);
-    else m.emissive.copy(LAMP_COLOUR).multiplyScalar(on ? SHADE_GLOW * glow : 0);
+  // Shades and LEDs glow with their own room's lights.
+  for (const [m, { glow, space }] of registry.glowMaterials) {
+    const l = space ? lit.get(space) : undefined;
+    if (!l?.on) m.emissive.setRGB(0, 0, 0);
+    else if (glow < 0) m.emissive.copy(m.userData.emissiveOn as THREE.Color).multiplyScalar(0.08 * l.level);
+    else m.emissive.copy(kelvinColor(l.lampKelvin)).multiplyScalar(SHADE_GLOW * glow * l.level);
   }
 }
 
@@ -177,7 +181,7 @@ function Furniture() {
   const placements = useLayout((s) => s.placements);
   const key = useLayout((s) => s.key);
   const carrying = useLayout((s) => s.carrying);
-  const lightsOn = useLightsOn();
+  const lit = useLitRooms();
   const plan = useStore((s) => s.mode === 'plan');
   const [shown, setShown] = useState<{ key: string; style: StyleId; list: Placement[] } | null>(null);
 
@@ -215,8 +219,8 @@ function Furniture() {
   }, [shown, carrying]);
 
   useEffect(() => {
-    if (shown) updateLamps(shell, shown.list, lightsOn);
-  }, [shown, shell, lightsOn]);
+    if (shown) updateLamps(shell, shown.list, lit);
+  }, [shown, shell, lit]);
 
   useEffect(
     () => () => {

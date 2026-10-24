@@ -9,7 +9,8 @@ import { editView } from './render/EditController';
 import { activeCameraRef, controls } from './render/Player';
 import { registry } from './render/registry';
 import { useLayout } from './state/layout';
-import { useStore, type LightsMode, type Panel, type Quality } from './state/store';
+import { applyLightScene, setRoomLight, toggleRooms } from './render/roomLights';
+import { useStore, type Panel, type Quality } from './state/store';
 
 const deg = Math.PI / 180;
 
@@ -29,8 +30,6 @@ export function applyUrlParams() {
   if (style && (STYLE_ORDER as string[]).includes(style)) patch.style = style as StyleId;
   const quality = p.get('quality');
   if (quality === 'low' || quality === 'medium' || quality === 'high') patch.quality = quality as Quality;
-  const lights = p.get('lights');
-  if (lights === 'auto' || lights === 'on' || lights === 'off') patch.lights = lights as LightsMode;
   const ev = num('ev');
   if (ev !== null) patch.exposureEv = ev;
   const fov = num('fov');
@@ -41,6 +40,10 @@ export function applyUrlParams() {
   if (panel === 'style' || panel === 'furniture' || panel === 'lighting' || panel === 'views' || panel === 'settings') patch.panel = panel as Panel;
   if (p.get('autostart') === '1') patch.started = true;
   s.set(patch);
+  // lights=auto|on|off, or a scene: evening, movie.
+  const lights = p.get('lights');
+  const scene = ({ auto: 'auto', on: 'allOn', off: 'allOff', evening: 'evening', movie: 'movie' } as const)[lights ?? ''];
+  if (scene) applyLightScene(scene);
 
   const x = num('x');
   const z = num('z');
@@ -59,6 +62,8 @@ export function installDebugHook() {
       controls,
       editView,
       registry,
+      /** Room lights: scene('evening'), set('living', { level: 0.4 }), toggle(['study']). */
+      lights: { scene: applyLightScene, set: setRoomLight, toggle: toggleRooms },
       teleport(x: number, z: number, yawDeg = 0, pitchDeg?: number) {
         controls.teleport = { x, z, yaw: yawDeg * deg, pitch: pitchDeg === undefined ? undefined : pitchDeg * deg };
       },

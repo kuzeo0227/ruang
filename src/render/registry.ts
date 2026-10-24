@@ -1,7 +1,7 @@
 // Shared, non-reactive scene state used across 3D components (read every frame, so kept out of React).
 
 import * as THREE from 'three';
-import type { ShellData, ZoneId } from '../shell/types';
+import type { ShellData, SpaceId, ZoneId } from '../shell/types';
 
 /** A placed piece of furniture in the scene. */
 export interface FurnitureEntry {
@@ -46,14 +46,16 @@ export const registry = {
   furniture: new Map<string, FurnitureEntry>(),
   /** Furniture footprints for collision. */
   obstacles: [] as Obstacle[],
-  /** Lamp shades and LEDs that glow when the lights are on, with their glow factor. */
-  glowMaterials: new Map<THREE.MeshStandardMaterial, number>(),
+  /** Lamp shades and LEDs that glow when their room's lights are on, with their glow factor and zone. */
+  glowMaterials: new Map<THREE.MeshStandardMaterial, { glow: number; zone: ZoneId; space: SpaceId | null }>(),
   /** Current (animated) openness of doors and sliders, 0..1. */
   doorOpen: new Map<string, number>(),
   /** Current sun state, written by the sun component. */
   sun: { elevation: 30, azimuth: 270 },
-  /** Whether room lights are currently on (resolved from 'auto' by the sun). */
+  /** Whether any of the unit's lights are on (Auto resolved by the sun). */
   lightsOn: false,
+  /** Dimmer level of each room whose lights are on. */
+  litLevels: new Map<SpaceId, number>(),
   /** Auto exposure: target average (key), limits, and the user's EV offset as a multiplier. */
   exposure: { key: 0.18, min: 1, max: 6, bias: 1 },
   /** Set to make exposure jump straight to the new view (after a teleport) instead of adapting. */

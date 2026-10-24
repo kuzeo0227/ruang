@@ -328,8 +328,6 @@ function renderCells(gl: THREE.WebGLRenderer, scene: THREE.Scene, apertures: Ape
 /** Diagnostics: scales for window light (x), bounce light (y), downlights (z) and reflections (w). */
 export const lightDebug = { value: new THREE.Vector4(1, 1, 1, 1) };
 
-/** Colour × intensity of every downlight; black when the lights are off. */
-export const downlightColor = { value: new THREE.Color(0, 0, 0) };
 export const apertureTexture = { value: apertureTarget.texture };
 export const apertureShadowTexture = { value: apertureShadowTarget.texture };
 export const apertureFurnitureTexture = { value: apertureFurnitureTarget.texture };
@@ -344,6 +342,19 @@ const zoneDiffuse = new Map<ZoneId, ZoneDiffuse>();
 export function zoneDiffuseUniforms(zone: ZoneId): ZoneDiffuse {
   let z = zoneDiffuse.get(zone);
   if (!z) zoneDiffuse.set(zone, (z = { texture: { value: null }, scale: { value: 0 } }));
+  return z;
+}
+
+/** Downlights a zone's surfaces are lit by (the rest still show, but light nothing). */
+export const MAX_DL_PER_ZONE = 8;
+/**
+ * Colour × intensity of each of a zone's downlights, in the order of `zoneLighting` (black when
+ * off). Always MAX_DL_PER_ZONE long; a material uses as many as it was compiled for.
+ */
+const zoneDownlights = new Map<ZoneId, { value: THREE.Color[] }>();
+export function zoneDownlightUniforms(zone: ZoneId): { value: THREE.Color[] } {
+  let z = zoneDownlights.get(zone);
+  if (!z) zoneDownlights.set(zone, (z = { value: Array.from({ length: MAX_DL_PER_ZONE }, () => new THREE.Color(0, 0, 0)) }));
   return z;
 }
 

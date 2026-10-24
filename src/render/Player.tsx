@@ -6,10 +6,11 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { floorHeightAt } from '../shell/build';
-import type { Rect, ShellData } from '../shell/types';
+import type { Rect, ShellData, WallSwitch } from '../shell/types';
 import { useStore } from '../state/store';
 import { furnitureUse } from './EditController';
 import { registry, type Obstacle } from './registry';
+import { isDusk, lightRooms, litRooms, toggleAllLights, toggleRooms } from './roomLights';
 import { getShell } from './shellCache';
 
 const RADIUS = 0.25;
@@ -140,10 +141,7 @@ export function Player() {
       controls.keys.add(e.code);
       if (e.code === 'KeyE' && !furnitureUse()) interact();
       if (e.code === 'KeyM') measureAction();
-      if (e.code === 'KeyL') {
-        const s = useStore.getState();
-        s.set({ lights: registry.lightsOn ? 'off' : 'on' });
-      }
+      if (e.code === 'KeyL') toggleAllLights();
       if (e.code === 'Comma' || e.code === 'Period') {
         const s = useStore.getState();
         const t = Math.min(23.75, Math.max(5.5, s.time + (e.code === 'Period' ? 0.25 : -0.25)));
@@ -274,7 +272,7 @@ export function Player() {
     if (now - lastReport.current > 0.12) {
       lastReport.current = now;
       const room = shell.spaces.find((s) => floorHeightAt([s], pos.x, pos.z) !== null)?.id ?? '';
-      const hint = targetDoor() ? doorHint() : null;
+      const hint = actionHint();
       if (room !== st.player.room || Math.abs(pos.x - st.player.x) > 0.02 || Math.abs(pos.z - st.player.z) > 0.02 || Math.abs(controls.yaw - st.player.yaw) > 0.02 || hint !== st.hint) {
         st.set({ player: { x: pos.x, z: pos.z, yaw: controls.yaw, room }, hint });
       }
@@ -308,14 +306,48 @@ export function targetDoor(): { id: string; open: number } | null {
   return best;
 }
 
-function doorHint(): string | null {
+/** The light switch under the crosshair (within about 12°), within reach and in front of the plate. */
+export function targetSwitch(): WallSwitch | null {
+  const shell = registry.shell;
+  const cam = activeCamera;
+  if (!shell || !cam) return null;
+  cam.getWorldDirection(forward);
+  let best: { sw: WallSwitch; cos: number } | null = null;
+  for (const sw of shell.switches) {
+    const dx = sw.position[0] - cam.position.x;
+    const dy = sw.position[1] - cam.position.y;
+    const dz = sw.position[2] - cam.position.z;
+    const dist = Math.hypot(dx, dy, dz);
+    if (dist > 2.2 || -(dx * sw.normal[0] + dz * sw.normal[2]) < 0.1) continue;
+    const cos = (dx * forward.x + dy * forward.y + dz * forward.z) / dist;
+    if (cos > 0.978 && (!best || cos > best.cos)) best = { sw, cos };
+  }
+  return best?.sw ?? null;
+}
+const forward = new THREE.Vector3();
+
+/** What E would do now, for the hint under the crosshair. */
+function actionHint(): string | null {
+  const sw = targetSwitch();
+  if (sw) {
+    const s = useStore.getState();
+    const lit = litRooms(s.unit, s.roomLights, s.style, isDusk(s.month, s.time));
+    const on = sw.rooms.some((r) => lit.get(r)?.on);
+    const label = sw.rooms.length > 1 ? 'living areas' : (lightRooms(s.unit).find((r) => r.id === sw.rooms[0])?.name ?? 'lights');
+    return `${on ? 'Switch off' : 'Switch on'} ${label}`;
+  }
   const t = targetDoor();
   if (!t) return null;
   return t.open > 0.5 ? 'Close door' : 'Open door';
 }
 
-/** Toggle the door the player is facing. */
+/** Flip the switch under the crosshair, or else toggle the door the player is facing. */
 export function interact() {
+  const sw = targetSwitch();
+  if (sw) {
+    toggleRooms(sw.rooms);
+    return;
+  }
   const t = targetDoor();
   if (!t) return;
   useStore.getState().setDoor(t.id, t.open > 0.5 ? 0 : 1);

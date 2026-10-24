@@ -20,10 +20,11 @@ import {
   apertureFurnitureTexture,
   apertureShadowTexture,
   apertureTexture,
-  downlightColor,
   lightDebug,
+  MAX_DL_PER_ZONE,
   MAX_LAMPS,
   zoneDiffuseUniforms,
+  zoneDownlightUniforms,
   zoneLampUniforms,
   type ZoneLighting,
 } from './daylight';
@@ -241,7 +242,6 @@ export interface PatchUniforms {
 }
 
 const MAX_AP_PER_ZONE = 4;
-const MAX_DL_PER_ZONE = 8;
 
 const LAYOUT_CODE = { none: 0, grid: 1, planks: 2 } as const;
 
@@ -338,7 +338,7 @@ float rApVisible(int i, int row, vec3 p) {
 float rBounce = 1.0;
 #if R_DL > 0
 uniform vec3 rDownPos[R_DL];
-uniform vec3 rDownColor;
+uniform vec3 rDownColor[R_DL];
 #endif
 #if R_LAMP > 0
 uniform vec4 rLampPos[R_LAMP];
@@ -436,20 +436,23 @@ const WINDOW_LIGHT = /* glsl */ `
 }
 #endif`;
 
-/** The zone's ceiling downlights: a wide beam pointing down, inverse-square falloff. */
+/**
+ * The zone's ceiling downlights: a wide beam pointing down, inverse-square falloff. Each has its
+ * own colour (black when off), so the rooms of an open-plan zone switch and dim separately.
+ */
 const DOWNLIGHTS = /* glsl */ `
 #if R_DL > 0
-if (rDownColor.r + rDownColor.g + rDownColor.b > 0.0) {
-  for (int i = 0; i < R_DL; i++) {
-    vec3 toL = rDownPos[i] - vRWorld;
-    float d2 = max(dot(toL, toL), 0.0025);
-    float cosBeam = toL.y * inversesqrt(d2);
-    IncidentLight dl;
-    dl.direction = normalize((viewMatrix * vec4(toL, 0.0)).xyz);
-    dl.color = rDownColor * smoothstep(0.15, 0.8, cosBeam) / d2 * rDbg.z;
-    dl.visible = true;
-    RE_Direct(dl, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight);
-  }
+for (int i = 0; i < R_DL; i++) {
+  vec3 dc = rDownColor[i];
+  if (dc.r + dc.g + dc.b <= 0.0) continue;
+  vec3 toL = rDownPos[i] - vRWorld;
+  float d2 = max(dot(toL, toL), 0.0025);
+  float cosBeam = toL.y * inversesqrt(d2);
+  IncidentLight dl;
+  dl.direction = normalize((viewMatrix * vec4(toL, 0.0)).xyz);
+  dl.color = dc * smoothstep(0.15, 0.8, cosBeam) / d2 * rDbg.z;
+  dl.visible = true;
+  RE_Direct(dl, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight);
 }
 #endif
 #if R_LAMP > 0
@@ -657,7 +660,7 @@ function addZoneUniforms(uniforms: PatchUniforms, zone: Zone | null, lighting: Z
   }
   if (dls.length) {
     uniforms.rDownPos = { value: dls.map((p) => new THREE.Vector3(...p)) };
-    uniforms.rDownColor = downlightColor;
+    uniforms.rDownColor = zoneDownlightUniforms(lighting!.zone);
   }
   const lamps = lighting ? MAX_LAMPS : 0;
   if (lamps) {

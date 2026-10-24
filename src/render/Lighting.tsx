@@ -3,13 +3,13 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { STYLES } from '../catalogue/styles';
 import { CEIL } from '../shell/build';
-import type { ZoneId } from '../shell/types';
+import type { SpaceId, ZoneId } from '../shell/types';
 import { useStore } from '../state/store';
-import { BLOCKER_LAYER, captureApertures, createBlockers, downlightColor, renderApertureShadows, zoneDiffuseUniforms } from './daylight';
+import { BLOCKER_LAYER, MAX_DL_PER_ZONE, captureApertures, createBlockers, renderApertureShadows, zoneDiffuseUniforms, zoneDownlightUniforms } from './daylight';
 import { QUALITY } from './quality';
 import { hideFurnitureNear, invalidateLighting, registry } from './registry';
+import { lightRooms, useLitRooms } from './roomLights';
 import { applyBackdrop, skyMaterial, type BackdropMeta } from './skyMaterial';
 import { getShell } from './shellCache';
 import { sunLight, sunPosition } from './sun';
@@ -39,23 +39,10 @@ export function kelvinColor(k: number): THREE.Color {
   return new THREE.Color().setRGB(c(r), c(g), c(b), THREE.SRGBColorSpace);
 }
 
-/** Whether the room lights are on: by the switch, or in Auto once the sun is low. */
-export function lightsOnAt(mode: 'auto' | 'on' | 'off', month: number, time: number): boolean {
-  return mode === 'on' || (mode === 'auto' && sunPosition(month, time).elevation < 4);
-}
-
-export function useLightsOn(): boolean {
-  const mode = useStore((s) => s.lights);
-  const time = useStore((s) => s.time);
-  const month = useStore((s) => s.month);
-  return lightsOnAt(mode, month, time);
-}
-
 export function Lighting() {
   const view = useStore((s) => s.view);
   const time = useStore((s) => s.time);
   const month = useStore((s) => s.month);
-  const lightsMode = useStore((s) => s.lights);
   const quality = useStore((s) => s.quality);
   const unit = useStore((s) => s.unit);
   const { gl, scene } = useThree();
@@ -63,18 +50,26 @@ export function Lighting() {
   const q = QUALITY[quality];
   const shell = useMemo(() => getShell(unit), [unit]);
 
-  // Backdrop texture for the current view.
+  // Backdrop textures for the current view: the landscape, and its night lights if it has them.
   useEffect(() => {
     let alive = true;
     const base = `/backdrops/${view}/`;
-    const file = quality === 'low' ? 'band_3k.webp' : 'band_6k.webp';
-    Promise.all([fetch(base + 'meta.json').then((r) => r.json() as Promise<BackdropMeta>), new THREE.TextureLoader().loadAsync(base + file)])
-      .then(([meta, tex]) => {
-        if (!alive) return;
+    const size = quality === 'low' ? '3k' : '6k';
+    const load = (file: string) =>
+      new THREE.TextureLoader().loadAsync(base + file).then((tex) => {
         tex.colorSpace = THREE.NoColorSpace; // decoded to linear in the shader
         tex.wrapS = THREE.RepeatWrapping;
         tex.anisotropy = 4;
-        applyBackdrop(skyMaterial, tex, meta);
+        return tex;
+      });
+    fetch(base + 'meta.json')
+      .then((r) => r.json() as Promise<BackdropMeta>)
+      .then((meta) => Promise.all([meta, load(`band_${size}.webp`), meta.night ? load(`night_${size}.webp`) : null]))
+      .then(([meta, tex, night]) => {
+        if (!alive) return;
+        const old = [skyMaterial.uniforms.landscape!.value, skyMaterial.uniforms.landNight!.value] as (THREE.Texture | null)[];
+        applyBackdrop(skyMaterial, tex, meta, night);
+        for (const t of old) t?.dispose();
         invalidateLighting(true);
       })
       .catch(() => applyBackdrop(skyMaterial, null, null));
@@ -106,6 +101,8 @@ export function Lighting() {
     const nightC = new THREE.Vector3(0.0002, 0.00028, 0.0005);
     (u.landLight!.value as THREE.Vector3).copy(nightC.lerp(day, smooth(-8, 2, el)));
     u.hazeAmount!.value = 0.1 + 0.25 * (1 - smooth(0, 20, el));
+    // Street lamps come on around sunset; lit windows show once the sky has darkened.
+    u.cityLights!.value = 1 - smooth(-6, 2, el);
 
     const light = sunRef.current;
     registry.sunLight = light;
@@ -114,9 +111,8 @@ export function Lighting() {
       light.intensity = SUN_STRENGTH * lightC.intensity;
       light.color.setRGB(...lightC.color);
     }
-    registry.lightsOn = lightsOnAt(lightsMode, month, time);
     invalidateLighting(true);
-  }, [time, month, lightsMode]);
+  }, [time, month]);
 
   // Shadow camera sized to the unit; shadows render only when something changed.
   useEffect(() => {
@@ -343,31 +339,59 @@ function Probes({ size }: { size: number }) {
   return null;
 }
 
-/** Ceiling downlights: the fittings, and the shared colour the surface shaders light their zone with. */
+/**
+ * Ceiling downlights: the fittings, and each light's colour for the surface shaders of its zone,
+ * from its room's switch, dimmer and colour temperature.
+ */
 function Downlights() {
-  const styleId = useStore((s) => s.style);
   const unit = useStore((s) => s.unit);
-  const kelvin = STYLES[styleId].lightKelvin;
   const shell = useMemo(() => getShell(unit), [unit]);
-  const on = useLightsOn();
+  const lit = useLitRooms();
 
-  const color = useMemo(() => kelvinColor(kelvin), [kelvin]);
   const trim = useMemo(() => new THREE.MeshStandardMaterial({ color: '#d8d6d2', roughness: 0.5, metalness: 0.2 }), []);
   const lens = useMemo(() => new THREE.MeshStandardMaterial({ color: '#f4f2ee', roughness: 0.35 }), []);
-  // The lit lens: bright enough to bloom at night exposure, and still read as on by day.
-  const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: color.clone().multiplyScalar(4), toneMapped: false }), [color]);
+  // The lit lens, one per room: bright enough to bloom at night exposure, and still read as on by day.
+  const glows = useMemo(() => new Map<SpaceId, THREE.MeshBasicMaterial>(), []);
+  const glowFor = (space: SpaceId) => {
+    let m = glows.get(space);
+    if (!m) glows.set(space, (m = new THREE.MeshBasicMaterial({ toneMapped: false })));
+    const l = lit.get(space);
+    if (l) m.color.copy(kelvinColor(l.kelvin)).multiplyScalar(4 * l.level);
+    return m;
+  };
+
   useEffect(() => {
-    if (on) downlightColor.value.copy(color).multiplyScalar(DOWNLIGHT);
-    else downlightColor.value.setRGB(0, 0, 0);
+    const index = new Map<ZoneId, number>();
+    for (const d of shell.downlights) {
+      const i = index.get(d.zone) ?? 0;
+      index.set(d.zone, i + 1);
+      if (i >= MAX_DL_PER_ZONE) continue;
+      const c = zoneDownlightUniforms(d.zone).value[i]!;
+      const l = lit.get(d.space);
+      if (l?.on) c.copy(kelvinColor(l.kelvin)).multiplyScalar(DOWNLIGHT * l.level);
+      else c.setRGB(0, 0, 0);
+    }
+    // Exposure opens up for lamplight once any of the unit's lights are on; the white balance may
+    // correct for the warmest of them, three quarters of the way (in log terms), so evenings stay
+    // warm white the way a camera's auto white balance leaves them.
+    const on = lightRooms(unit).flatMap((r) => {
+      const l = lit.get(r.id);
+      return l?.on ? [l] : [];
+    });
+    registry.lightsOn = on.length > 0;
+    registry.litLevels = new Map(lightRooms(unit).flatMap((r) => (lit.get(r.id)?.on ? [[r.id, lit.get(r.id)!.level] as const] : [])));
+    const warmest = on.length ? Math.min(...on.map((l) => Math.min(l.kelvin, l.lampKelvin))) : 3000;
+    const c = kelvinColor(warmest);
+    registry.whiteBalance.night.setRGB(Math.pow(c.g / c.r, 0.75), 1, Math.pow(c.g / Math.max(c.b, 0.02), 0.75));
     invalidateLighting();
-  }, [on, color]);
+  }, [shell, lit, unit]);
 
   const plan = useStore((s) => s.mode === 'plan');
   return (
     <group visible={!plan}>
       {shell.downlights.map((d, i) => (
         <group key={i} position={[d.position[0], CEIL - 0.002, d.position[2]]}>
-          <mesh rotation={[Math.PI / 2, 0, 0]} material={on ? glow : lens}>
+          <mesh rotation={[Math.PI / 2, 0, 0]} material={lit.get(d.space)?.on ? glowFor(d.space) : lens}>
             <circleGeometry args={[0.045, 24]} />
           </mesh>
           <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} material={trim}>
@@ -385,21 +409,16 @@ function Downlights() {
  */
 function ExposureControl() {
   const ev = useStore((s) => s.exposureEv);
-  const styleId = useStore((s) => s.style);
-  const kelvin = STYLES[styleId].lightKelvin;
-  useEffect(() => {
-    // The most the white balance may correct under downlights: three quarters of the way (in log terms), so evenings stay warm
-    // white, the way a camera's auto white balance leaves them.
-    const c = kelvinColor(kelvin);
-    const wb = registry.whiteBalance.night;
-    wb.setRGB(Math.pow(c.g / c.r, 0.75), 1, Math.pow(c.g / Math.max(c.b, 0.02), 0.75));
-  }, [kelvin]);
   useFrame(() => {
     const el = registry.sun.elevation;
     const daylight = smooth(-6, 20, el);
     const e = registry.exposure;
     if (registry.lightsOn && daylight < 1) {
-      e.key = THREE.MathUtils.lerp(0.13, 0.18, daylight);
+      // The eye adapts only partly to dimmer light, so a dimmed room looks dimmer: go by the room
+      // you are in, or (in a dark one) the brightest lit room.
+      const levels = registry.litLevels;
+      const level = levels.get(useStore.getState().player.room as SpaceId) ?? Math.max(0.05, ...levels.values());
+      e.key = THREE.MathUtils.lerp(0.13 * Math.sqrt(level), 0.18, daylight);
       e.max = THREE.MathUtils.lerp(60, 8, daylight);
     } else {
       // Lights off at night: the eye only partly adapts, so the room stays dark.

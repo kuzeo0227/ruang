@@ -88,7 +88,7 @@ export function StartOverlay() {
               <Hand className="ic" size={16} />
               Left thumb moves, right thumb looks.
             </span>
-            <span>Tap “Open door” when it appears. The ruler button measures.</span>
+            <span>Tap “Open door” or “Switch on” when it appears. The ruler button measures.</span>
           </div>
         ) : (
           <div className="howto keys">
@@ -96,9 +96,9 @@ export function StartOverlay() {
               [['W', 'A', 'S', 'D'], 'Move'],
               [['Mouse'], 'Look around'],
               [['Shift'], 'Run'],
-              [['E'], 'Open or close a door'],
+              [['E'], 'Doors, light switches, pick up'],
               [['M'], 'Tape measure'],
-              [['L'], 'Room lights'],
+              [['L'], 'All lights on or off'],
               [['1–4'], 'Style, lighting, views'],
               [['Esc'], 'Free the cursor'],
             ].map(([keys, label]) => (
@@ -113,7 +113,7 @@ export function StartOverlay() {
             ))}
           </div>
         )}
-        <p className="fine">Shell, finishes, sun and sky for Kuala Lumpur. Furniture and prices arrive in Phase 2.</p>
+        <p className="fine">Sun and sky are simulated for Kuala Lumpur. Prices are dummy estimates in ringgit.</p>
       </div>
     </div>
   );

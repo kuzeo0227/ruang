@@ -10,7 +10,7 @@ import polygonClipping from 'polygon-clipping';
 import type { Opening, RoomId, UnitPlan, Vec2 } from '../plan/types';
 import { Batch, v3, type V3 } from './batch';
 import { clipIntervals, pointInPolygon, polygonBounds, polygonCentroid, scanIntervals, subtractIntervals, type Interval } from './geom2d';
-import type { Aperture, Downlight, Rect, Role, ShellData, SlidingPanel, Space, SpaceId, SwingDoor, Zone, ZoneId } from './types';
+import type { Aperture, Downlight, Rect, Role, ShellData, SlidingPanel, Space, SpaceId, SwingDoor, WallSwitch, Zone, ZoneId } from './types';
 
 export const CEIL = 2.75;
 const SLAB = 0.2;
@@ -338,6 +338,29 @@ export function buildShell(plan: UnitPlan, opts: BuildOptions = {}): ShellData {
     apertures.push({ id, zone, origin, u, v, normal, depth: depth * MM, transmit });
   };
 
+  // ---------- Light switches ----------
+  // Plates 1.3 m up beside the doors, clear of the architrave. A plate goes where the wall is solid
+  // for its whole width and it sits inside the space it faces.
+  const switches: WallSwitch[] = [];
+  const lounge = (['living', 'dining', 'kitchen', 'corridor'] as RoomId[]).filter((id) => plan.rooms.some((r) => r.id === id));
+  const plateHalf = (gangs: number) => (gangs > 3 ? 73 : 43);
+  const addSwitch = (id: string, w: PlanWall, along: number, side: 1 | -1, at: Space, rooms: RoomId[]): boolean => {
+    const half = plateHalf(rooms.length);
+    const reach = half + 30 + 75;
+    if (along - reach < w.lo || along + reach > w.hi) return false;
+    // Doors have 65 mm architraves; other openings only their frames.
+    const clear = (o: PlanOpening) => (o.spec.kind === 'door' ? 75 : 25);
+    if (w.openings.some((o) => along + half > o.s0 - clear(o) && along - half < o.s1 + clear(o))) return false;
+    const face = w.c + side * (w.t / 2);
+    const inside = (a: number) => {
+      const q = w.axis === 'x' ? { x: a, y: face + side * 30 } : { x: face + side * 30, y: a };
+      return pointInPolygon(q, at.polygon);
+    };
+    if (!inside(along - reach) || !inside(along + reach)) return false;
+    switches.push({ id, rooms, zone: at.zone, position: P(w.axis, along, face, at.floorY + 1.3), normal: v3.scale(acrossVec(w.axis), side), gangs: rooms.length });
+    return true;
+  };
+
   // ---------- Openings: reveals, joinery, doors ----------
   const doors: SwingDoor[] = [];
   const sliders: SlidingPanel[] = [];
@@ -493,6 +516,12 @@ export function buildShell(plan: UnitPlan, opts: BuildOptions = {}): ShellData {
           slideSpan: [o.s0 * MM, (clear0 + panelW) * MM],
           centre: P(w.axis, mid, w.c, 1.2),
         });
+        // The balcony light's switch, inside by the sliding panel's handle (or the other end).
+        if (inside && outside && indoor(inside) && !indoor(outside)) {
+          const rooms = [outside.id as RoomId];
+          const half = plateHalf(1);
+          if (!addSwitch(`${o.spec.id}-switch`, w, o.s0 - 30 - half, inSign, inside, rooms)) addSwitch(`${o.spec.id}-switch`, w, o.s1 + 30 + half, inSign, inside, rooms);
+        }
       }
 
       if (kind === 'door') {
@@ -565,6 +594,27 @@ export function buildShell(plan: UnitPlan, opts: BuildOptions = {}): ShellData {
           closedRect: { x0: Math.min(r0[0], r1[0]), z0: Math.min(r0[2], r1[2]), x1: Math.max(r0[0], r1[0]), z1: Math.max(r0[2], r1[2]) },
           centre: P(w.axis, mid, w.c, 1.0),
         });
+
+        // Its light switch: on the latch side, so the open leaf never covers it. Rooms are switched
+        // from inside, toilets and the yard from outside (as is usual in Malaysia), and the
+        // living areas from a plate inside the front door.
+        const other = into === plus ? minus : plus;
+        const intoSide: 1 | -1 = swingAcross > 0 ? 1 : -1;
+        let plate: { at: Space | null; side: 1 | -1; rooms: RoomId[] } | null = null;
+        if (spec.role === 'main') plate = { at: into, side: intoSide, rooms: lounge };
+        else if (spec.role === 'room' && into) plate = { at: into, side: intoSide, rooms: [into.id as RoomId] };
+        else {
+          const room = [plus, minus].find((sp) => sp && (spec.role === 'toilet' ? sp.kind === 'wet' : sp.kind === 'outdoor'));
+          const at = room === plus ? minus : plus;
+          if (room) plate = { at, side: at === plus ? 1 : -1, rooms: [room.id as RoomId] };
+        }
+        if (plate?.at && indoor(plate.at) && plate.rooms.length) {
+          const half = plateHalf(plate.rooms.length);
+          const latch = hingeAtS0 ? o.s1 + 65 + 30 + half : o.s0 - 65 - 30 - half;
+          const hingeSide = hingeAtS0 ? o.s0 - 65 - 30 - half : o.s1 + 65 + 30 + half;
+          // Beside the hinge only if the leaf swings away from the plate.
+          if (!addSwitch(`${spec.id}-switch`, w, latch, plate.side, plate.at, plate.rooms) && plate.at === other) addSwitch(`${spec.id}-switch`, w, hingeSide, plate.side, plate.at, plate.rooms);
+        }
       }
     }
   }
@@ -794,6 +844,7 @@ export function buildShell(plan: UnitPlan, opts: BuildOptions = {}): ShellData {
     acUnits,
     apertures,
     downlights,
+    switches,
     bounds: { min: [all.x0 * MM, -SLAB, all.y0 * MM], max: [all.x1 * MM, CEIL + SLAB, all.y1 * MM] },
     spawn: { position: [plan.spawn.position.x * MM, 0, plan.spawn.position.y * MM], yaw: (-plan.spawn.facingDeg * Math.PI) / 180 },
     stats: { triangles },

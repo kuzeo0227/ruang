@@ -128,6 +128,21 @@ export interface Aperture {
   transmit: number;
 }
 
+/** A light switch plate on a wall, beside a door. */
+export interface WallSwitch {
+  id: string;
+  /** Rooms it switches, together. */
+  rooms: RoomId[];
+  /** The zone it is in (for its lighting). */
+  zone: ZoneId;
+  /** Centre of the plate's back, on the wall face (world, metres). */
+  position: V3;
+  /** Unit normal out of the wall. */
+  normal: V3;
+  /** Rockers on the plate. */
+  gangs: number;
+}
+
 /** A recessed ceiling downlight. */
 export interface Downlight {
   zone: ZoneId;
@@ -145,6 +160,7 @@ export interface ShellData {
   acUnits: { position: V3; rotationY: number }[];
   apertures: Aperture[];
   downlights: Downlight[];
+  switches: WallSwitch[];
   /** World bounds of the unit, slabs included. */
   bounds: { min: V3; max: V3 };
   spawn: { position: V3; yaw: number };

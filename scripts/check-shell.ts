@@ -97,6 +97,18 @@ for (const unit of Object.values(UNITS)) {
   console.log(`   daylight openings ${shell.apertures.length}; downlights ${[...perZone].map(([z, n]) => `${z} ${n}`).join(', ')}`);
   if ([...perZone.values()].some((n) => n > 8)) fail('a zone has more than 8 downlights (the shader limit)');
 
+  // A light switch by every room's door and inside the front door, on a wall face, in its zone.
+  console.log(`   switches ${shell.switches.map((w) => `${w.id.replace('-switch', '')}→${w.rooms.join('+')}`).join(', ')}`);
+  for (const d of shell.doors) {
+    if (d.role !== 'service' && !shell.switches.some((w) => w.id === `${d.id}-switch`)) fail(`door ${d.id} has no light switch`);
+  }
+  for (const w of shell.switches) {
+    const at = [w.position[0] + w.normal[0] * 0.05, w.position[2] + w.normal[2] * 0.05];
+    const space = shell.spaces.find((s) => pointInPolygon({ x: at[0]! * 1000, y: at[1]! * 1000 }, s.polygon));
+    if (space?.zone !== w.zone) fail(`switch ${w.id} is not in front of a wall of ${w.zone}`);
+    if (shell.collision.some((r) => circleHitsRect(at[0]!, at[1]!, 0.01, r))) fail(`switch ${w.id} sits inside a wall`);
+  }
+
   const roles = new Map<string, number>();
   for (const b of shell.batches) roles.set(b.role, (roles.get(b.role) ?? 0) + b.geometry.attributes.position!.count / 3);
   console.log(`   triangles by role: ${[...roles].map(([r, n]) => `${r} ${n}`).join(', ')}`);

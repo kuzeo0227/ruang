@@ -10,6 +10,12 @@ export interface BackdropMeta {
   uNorth: number;
   hazeSRGB: [number, number, number];
   groundSRGB: [number, number, number];
+  /** There is a night-lights texture (night_6k / night_3k.webp): lit windows, street lamps. */
+  night?: boolean;
+  /** Radiance of the brightest night lights (the texture is normalised to them). */
+  nightPeak?: number;
+  /** Strength of the light-pollution glow over the horizon at night (city views). */
+  skyGlow?: number;
 }
 
 const vertexShader = /* glsl */ `
@@ -77,6 +83,13 @@ uniform vec3 landLight;
 uniform vec3 groundColor;
 uniform vec3 hazeColor;
 uniform float hazeAmount;
+// Night lights: the brightest lights' radiance (the texture is normalised to them), and how far
+// they are switched on (dusk to night).
+uniform sampler2D landNight;
+uniform float hasNight;
+uniform float nightPeak;
+uniform float cityLights;
+uniform float skyGlow;
 
 const float pi = 3.141592653589793;
 const float rayleighZenithLength = 8.4E3;
@@ -185,6 +198,8 @@ void main() {
   float star = step(0.9975, hash13(starCell)) * smoothstep(0.0, 0.15, up);
   float twinkle = 0.6 + 0.4 * hash13(starCell + 7.0);
   nightSky += star * twinkle * 0.012;
+  // A city's own glow, reflected off the haze over it: orange low down, fading upwards.
+  nightSky += vec3(0.00075, 0.0004, 0.0002) * skyGlow * cityLights * exp(-up * 7.0);
   sky = sky * skyScale + nightSky * night * nightLight;
 
   vec3 color = sky;
@@ -208,6 +223,11 @@ void main() {
     float haze = hazeAmount * (1.0 - smoothstep(0.0, 6.0, abs(el))) ;
     vec3 horizonSky = skyRadiance(normalize(vec3(direction.x, 0.02, direction.z)), Fex) * skyScale + nightSky * night * nightLight;
     land = mix(land, horizonSky, haze);
+    // Lit windows and street lamps (already dimmed by distance in the texture).
+    if (hasNight > 0.5 && cityLights > 0.0 && el >= elMin) {
+      vec3 lights = srgbToLinear(texture2D(landNight, vec2(u, (el - elMin) / (elMax - elMin))).rgb);
+      land += lights * nightPeak * cityLights * mix(1.0, nightLight, night);
+    }
     color = mix(sky, land, mask);
   }
   gl_FragColor = vec4(color, 1.0);
@@ -241,6 +261,11 @@ export function createSkyMaterial(): THREE.ShaderMaterial {
       hazeColor: { value: new THREE.Vector3(0.6, 0.65, 0.7) },
       hazeAmount: { value: 0.15 },
       twilight: { value: 0 },
+      landNight: { value: null },
+      hasNight: { value: 0 },
+      nightPeak: { value: 0.04 },
+      cityLights: { value: 0 },
+      skyGlow: { value: 0 },
     },
     vertexShader,
     fragmentShader,
@@ -252,9 +277,13 @@ export function createSkyMaterial(): THREE.ShaderMaterial {
   });
 }
 
-export function applyBackdrop(mat: THREE.ShaderMaterial, tex: THREE.Texture | null, meta: BackdropMeta | null) {
+export function applyBackdrop(mat: THREE.ShaderMaterial, tex: THREE.Texture | null, meta: BackdropMeta | null, nightTex: THREE.Texture | null = null) {
   mat.uniforms.landscape!.value = tex;
   mat.uniforms.hasLandscape!.value = tex && meta ? 1 : 0;
+  mat.uniforms.landNight!.value = nightTex;
+  mat.uniforms.hasNight!.value = nightTex && meta ? 1 : 0;
+  mat.uniforms.nightPeak!.value = meta?.nightPeak ?? 0.04;
+  mat.uniforms.skyGlow!.value = meta?.skyGlow ?? 0;
   if (meta) {
     mat.uniforms.elMin!.value = meta.elMinDeg;
     mat.uniforms.elMax!.value = meta.elMaxDeg;

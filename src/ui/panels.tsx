@@ -1,15 +1,18 @@
 // Side panels (bottom sheets on phones): unit, style, lighting, views and settings.
 
-import { Check, Copy, House, Lightbulb, LightbulbOff, Lock, Mountain, Palette, Settings, Sparkles, Sun, Moon, Sunrise, Sunset, LampCeiling } from 'lucide-react';
+import { Check, Copy, House, Lightbulb, Lock, Mountain, Palette, Power, Settings, Sun, Moon, SunMoon, Sunrise, Sunset, Tv, type LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Color } from 'three';
 import { MATERIALS } from '../catalogue/materials';
 import { STYLES, STYLE_ORDER } from '../catalogue/styles';
 import { UNITS } from '../plan/units';
-import type { UnitTypeId } from '../plan/types';
+import type { RoomId, UnitTypeId } from '../plan/types';
+import { kelvinColor } from '../render/Lighting';
 import { controls } from '../render/Player';
 import { registry } from '../render/registry';
+import { DUSK_ELEVATION, KELVINS, applyLightScene, lightRooms, roomLight, setRoomLight, toggleRooms, useLitRooms, type LitRoom } from '../render/roomLights';
 import { sunPosition, sunTimes } from '../render/sun';
-import { useStore, writeSetting, type LightsMode, type Quality } from '../state/store';
+import { useStore, writeSetting, type LightScene, type Quality, type RoomLight } from '../state/store';
 import { PanelFrame, Range, Seg, Switch, compassPoint, formatClock } from './common';
 import { FurniturePanel } from './FurniturePanel';
 
@@ -106,7 +109,7 @@ function StylePanel() {
           );
         })}
       </div>
-      <p className="note">Phase 1 changes the shell finishes: floors, walls, doors, frames and hardware. Each style's furniture arrives in Phase 2.</p>
+      <p className="note">A style changes the furniture and the finishes of floors, walls, doors, frames and hardware. Your edits are kept for each style.</p>
     </PanelFrame>
   );
 }
@@ -133,10 +136,88 @@ function todGradient(sunrise: number, sunset: number) {
   return `linear-gradient(90deg, ${stops.map(([t, c]) => `${c} ${(((t - T_MIN) / (T_MAX - T_MIN)) * 100).toFixed(1)}%`).join(', ')})`;
 }
 
+const LIGHT_SCENES: { id: LightScene; label: string; icon: LucideIcon }[] = [
+  { id: 'auto', label: 'Auto', icon: SunMoon },
+  { id: 'evening', label: 'Evening', icon: Sunset },
+  { id: 'movie', label: 'Movie', icon: Tv },
+  { id: 'allOn', label: 'All on', icon: Lightbulb },
+  { id: 'allOff', label: 'All off', icon: Power },
+];
+
+/** The colour a light of this temperature looks, for the swatch. */
+const WHITE = new Color(1, 1, 1);
+const kelvinCss = (k: number) => `#${kelvinColor(k).lerp(WHITE, 0.18).getHexString()}`;
+const nextKelvin = (k: number) => KELVINS.find((x) => x > k) ?? KELVINS[0];
+
+function RoomRow({ id, name, light, lit }: { id: RoomId; name: string; light: RoomLight; lit: LitRoom | undefined }) {
+  const on = !!lit?.on;
+  const kelvin = lit?.kelvin ?? 3000;
+  const p = ((light.level - 0.05) / 0.95) * 100;
+  const status = on ? `${Math.round(light.level * 100)}% · ${kelvin} K` : light.mode === 'auto' ? 'Auto · on at dusk' : 'Off';
+  return (
+    <div className={`room ${on ? 'on' : ''}`}>
+      <span className="rname">
+        {name}
+        <small className="tabular">{status}</small>
+      </span>
+      <input
+        className="range dim"
+        type="range"
+        aria-label={`${name} brightness`}
+        min={0.05}
+        max={1}
+        step={0.05}
+        value={light.level}
+        style={{ '--p': `${p}%` } as React.CSSProperties}
+        onChange={(e) => setRoomLight(id, { level: Number(e.target.value), mode: 'on' })}
+      />
+      <button
+        className="kelvin"
+        style={{ background: kelvinCss(kelvin), color: kelvinCss(kelvin) }}
+        title={`${kelvin} K: click for ${nextKelvin(kelvin)} K`}
+        aria-label={`${name} colour temperature, ${kelvin} kelvin`}
+        onClick={() => setRoomLight(id, { kelvin: nextKelvin(kelvin) })}
+      />
+      <Switch on={on} label={`${name} lights`} onChange={() => toggleRooms([id])} />
+    </div>
+  );
+}
+
+function RoomLights() {
+  const unit = useStore((s) => s.unit);
+  const scene = useStore((s) => s.lightScene);
+  const roomLights = useStore((s) => s.roomLights);
+  const lit = useLitRooms();
+  const rooms = useMemo(() => lightRooms(unit), [unit]);
+  return (
+    <div className="block">
+      <div className="row between">
+        <span className="label">Room lights</span>
+        <kbd>L</kbd>
+      </div>
+      <div className="scenes" role="radiogroup" aria-label="Light scenes">
+        {LIGHT_SCENES.map((sc) => (
+          <button key={sc.id} role="radio" aria-checked={scene === sc.id} className={scene === sc.id ? 'on' : ''} onClick={() => applyLightScene(sc.id)}>
+            <sc.icon className="ic" size={15} />
+            {sc.label}
+          </button>
+        ))}
+      </div>
+      <div className="rooms">
+        {rooms.map((r) => (
+          <RoomRow key={r.id} id={r.id} name={r.name} light={roomLight(roomLights, r.id)} lit={lit.get(r.id)} />
+        ))}
+      </div>
+      <p className="readout">
+        Auto lights a room once the sun drops below {DUSK_ELEVATION}°. Drag a bar to dim, tap a dot for a warmer or cooler white. Wall switches by the doors work too (<kbd>E</kbd>).
+      </p>
+    </div>
+  );
+}
+
 function LightingPanel() {
   const time = useStore((s) => s.time);
   const month = useStore((s) => s.month);
-  const lights = useStore((s) => s.lights);
   const set = useStore((s) => s.set);
   const { sunrise, sunset } = useMemo(() => sunTimes(month), [month]);
   const noon = useMemo(() => {
@@ -155,7 +236,7 @@ function LightingPanel() {
     { label: 'Sunrise', icon: Sunrise, t: sunrise + 0.3 },
     { label: 'Midday', icon: Sun, t: noon.h },
     { label: 'Golden hour', icon: Sunset, t: sunset - 0.7 },
-    { label: 'Evening', icon: Moon, t: 20.5 },
+    { label: 'Night', icon: Moon, t: 20.5 },
   ];
 
   return (
@@ -226,26 +307,7 @@ function LightingPanel() {
         </p>
       </div>
 
-      <div className="block">
-        <div className="row between">
-          <span className="label">Room lights</span>
-          <kbd>L</kbd>
-        </div>
-        <Seg<LightsMode>
-          label="Room lights"
-          value={lights}
-          onChange={(v) => set({ lights: v })}
-          options={[
-            { id: 'auto', label: 'Auto', icon: Sparkles },
-            { id: 'on', label: 'On', icon: Lightbulb },
-            { id: 'off', label: 'Off', icon: LightbulbOff },
-          ]}
-        />
-        <p className="readout">{lights === 'auto' ? 'Auto turns the downlights on at dusk, when the sun drops below 4°.' : lights === 'on' ? 'All downlights on.' : 'All downlights off.'}</p>
-        <p className="note">
-          <LampCeiling className="ic inline" size={14} /> Per-room switches, dimmers and colour temperature arrive in Phase 3.
-        </p>
-      </div>
+      <RoomLights />
     </PanelFrame>
   );
 }

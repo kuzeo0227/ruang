@@ -178,6 +178,7 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; 
 .val.small { font-size: 12px; font-weight: 600; color: var(--text-2); }
 .tiny { font-size: 11px; color: var(--text-3); }
 .readout { margin: 0; font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.readout kbd { min-width: 18px; height: 18px; padding: 0 4px; font-size: 10px; vertical-align: 1px; }
 .note { margin: 0; font-size: 12px; line-height: 1.45; color: var(--text-3); padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
 
 /* Furniture panel */
@@ -262,6 +263,20 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; 
 .scenes button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: var(--r-pill); font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--glass-line); transition: background var(--fast), border-color var(--fast); }
 .scenes button:hover { background: color-mix(in srgb, var(--c-lighting) 22%, transparent); border-color: color-mix(in srgb, var(--c-lighting) 70%, transparent); }
 .scenes .ic { color: var(--c-lighting); }
+.scenes button.on { background: color-mix(in srgb, var(--c-lighting) 30%, transparent); border-color: var(--c-lighting); }
+.rooms { display: flex; flex-direction: column; gap: 2px; }
+.room { display: grid; grid-template-columns: 1fr 76px 16px 40px; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 12px; font-size: 14px; color: var(--text-2); transition: background var(--fast), color var(--fast); }
+.room.on { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.room .rname { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.room .rname small { font-size: 11px; font-weight: 500; color: var(--text-3); white-space: nowrap; }
+.room .dim { --c: var(--c-lighting); height: 20px; }
+.room:not(.on) .dim { --c: rgba(255, 255, 255, 0.3); }
+.room .dim::-webkit-slider-thumb { width: 14px; height: 14px; margin-top: -4px; }
+.room .dim::-moz-range-thumb { width: 14px; height: 14px; }
+.kelvin { width: 16px; height: 16px; padding: 0; border-radius: 50%; box-shadow: 0 0 9px currentColor; cursor: pointer; transition: transform var(--fast) var(--spring), opacity var(--fast); }
+.kelvin:hover { transform: scale(1.2); }
+.room:not(.on) .kelvin { opacity: 0.5; box-shadow: none; }
+.p-lighting .switch.on { background: var(--c-lighting); }
 
 /* Style cards */
 .stylecard { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 12px; text-align: left; border-radius: var(--r-md); background: rgba(255, 255, 255, 0.06); border: 1px solid var(--glass-line); transition: background var(--fast), border-color var(--fast), transform var(--fast) var(--spring); }
